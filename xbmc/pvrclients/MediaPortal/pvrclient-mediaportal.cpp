@@ -2,20 +2,18 @@
  *      Copyright (C) 2005-2010 Team XBMC
  *      http://www.xbmc.org
  *
- *  This Program is free software; you can redistribute it and/or modify
+ *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2, or (at your option)
- *  any later version.
+ *  the Free Software Foundation, either version 2 of the License, or
+ *  (at your option) any later version.
  *
- *  This Program is distributed in the hope that it will be useful,
+ *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, write to
- *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
- *  http://www.gnu.org/copyleft/gpl.html
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -48,7 +46,6 @@ cPVRClientMediaPortal::cPVRClientMediaPortal()
   m_BackendUTCoffset  = 0;
   m_BackendTime       = 0;
   m_bStop             = true;
-  m_bConnected        = false;
 }
 
 cPVRClientMediaPortal::~cPVRClientMediaPortal()
@@ -247,6 +244,7 @@ void* cPVRClientMediaPortal::Process(void*)
 /************************************************************/
 /** General handling */
 
+// Used among others for the server name string in the "Recordings" view
 const char* cPVRClientMediaPortal::GetBackendName()
 {
   if (!m_tcpclient->is_valid())
@@ -258,7 +256,9 @@ const char* cPVRClientMediaPortal::GetBackendName()
 
   if(m_BackendName.length() == 0)
   {
-    m_BackendName = SendCommand("GetBackendName:\n");
+    m_BackendName = "MediaPortal TV-server (";
+    m_BackendName += SendCommand("GetBackendName:\n");
+    m_BackendName += ")";
   }
 
   return m_BackendName.c_str();
@@ -316,6 +316,9 @@ PVR_ERROR cPVRClientMediaPortal::GetMPTVTime(time_t *localTime, int *gmtOffset)
 
   if(fields.size() >= 3)
   {
+    //[0] date + time TV Server
+    //[1] UTC offset hours
+    //[2] UTC offset minutes
     //From cPVREpg::cPVREpg(): Expected PVREpg GMT offset is in seconds
     m_BackendUTCoffset = ((atoi(fields[1].c_str()) * 60) + atoi(fields[2].c_str())) * 60;
 
@@ -324,14 +327,15 @@ PVR_ERROR cPVRClientMediaPortal::GetMPTVTime(time_t *localTime, int *gmtOffset)
     if(count == 6)
     {
       //timeinfo = *localtime ( &rawtime );
+      XBMC->Log(LOG_DEBUG, "GetMPTVTime: time from MP TV Server: %d-%d-%d %d:%d:%d, offset %d seconds", year, month, day, hour, minute, second, m_BackendUTCoffset );
       timeinfo.tm_hour = hour;
       timeinfo.tm_min = minute;
       timeinfo.tm_sec = second;
       timeinfo.tm_year = year - 1900;
       timeinfo.tm_mon = month - 1;
       timeinfo.tm_mday = day;
+      timeinfo.tm_isdst = -1; //Actively determines whether DST is in effect from the specified time and the local time zone.
       // Make the other fields empty:
-      timeinfo.tm_isdst = 0;
       timeinfo.tm_wday = 0;
       timeinfo.tm_yday = 0;
 
@@ -343,7 +347,8 @@ PVR_ERROR cPVRClientMediaPortal::GetMPTVTime(time_t *localTime, int *gmtOffset)
         return PVR_ERROR_SERVER_ERROR;
       }
 
-      XBMC->Log(LOG_DEBUG, "GetMPTVTime: %s, offset: %i seconds", asctime(gmtime(&m_BackendTime)), m_BackendUTCoffset );
+      XBMC->Log(LOG_DEBUG, "GetMPTVTime: localtime %s", asctime(localtime(&m_BackendTime)));
+      XBMC->Log(LOG_DEBUG, "GetMPTVTime: gmtime    %s", asctime(gmtime(&m_BackendTime)));
 
       *localTime = m_BackendTime;
       *gmtOffset = m_BackendUTCoffset;
@@ -450,11 +455,11 @@ PVR_ERROR cPVRClientMediaPortal::RequestChannelList(PVRHANDLE handle, int radio)
 
   if(radio)
   {
-    XBMC->Log(LOG_DEBUG, "RequestChannelList for Radio group:%s", g_sRadioGroup.c_str());
-    command.Format("ListRadioChannels:%s\n", g_sRadioGroup.c_str());
+    XBMC->Log(LOG_DEBUG, "RequestChannelList for Radio group:%s", g_szRadioGroup.c_str());
+    command.Format("ListRadioChannels:%s\n", uri::encode(uri::PATH_TRAITS, g_szRadioGroup).c_str());
   } else {
-    XBMC->Log(LOG_DEBUG, "RequestChannelList for TV group:%s", g_sTVGroup.c_str());
-    command.Format("ListTVChannels:%s\n", g_sTVGroup.c_str());
+    XBMC->Log(LOG_DEBUG, "RequestChannelList for TV group:%s", g_szTVGroup.c_str());
+    command.Format("ListTVChannels:%s\n", uri::encode(uri::PATH_TRAITS, g_szTVGroup).c_str());
   }
   SendCommand2(command.c_str(), code, lines);
 
@@ -463,6 +468,10 @@ PVR_ERROR cPVRClientMediaPortal::RequestChannelList(PVRHANDLE handle, int radio)
     string& data(*it);
 
     if (data.length() == 0) {
+      if(radio)
+        XBMC->Log(LOG_DEBUG, "TVServer returned no data. Empty/non existing radio group '%s'?", g_szRadioGroup.c_str());
+      else
+        XBMC->Log(LOG_DEBUG, "TVServer returned no data. Empty/non existing tv group '%s'?", g_szTVGroup.c_str());
       break;
     }
 
@@ -480,7 +489,7 @@ PVR_ERROR cPVRClientMediaPortal::RequestChannelList(PVRHANDLE handle, int radio)
       tag.uid = channel.UID();
       tag.number = channel.UID(); //channel.ExternalID();
       tag.name = channel.Name();
-      tag.callsign = "";
+      tag.callsign = channel.Name(); //Used for automatic channel icon search
       tag.iconpath = "";
       tag.encryption = channel.Encrypted();
       tag.radio = (radio > 0 ? true : false) ; //TODO:(channel.Vpid() == 0) && (channel.Apid(0) != 0) ? true : false;
@@ -490,12 +499,23 @@ PVR_ERROR cPVRClientMediaPortal::RequestChannelList(PVRHANDLE handle, int radio)
       tag.multifeed = false;
       tag.input_format = "";
 
-      if(radio)
-        tag.stream_url = "pvr://stream/radio/%i.ts"; //stream.c_str();
+      if(channel.IsWebstream())
+      {
+        tag.stream_url = channel.URL();
+      }
       else
-        tag.stream_url = "pvr://stream/tv/%i.ts"; //stream.c_str();
+      {
+        //Use GetLiveStreamURL to fetch an rtsp stream
+        if(radio)
+          tag.stream_url = "pvr://stream/radio/%i.ts"; //stream.c_str();
+        else
+          tag.stream_url = "pvr://stream/tv/%i.ts"; //stream.c_str();
+      }
 
-      PVR->TransferChannelEntry(handle, &tag);
+      if( (!g_bOnlyFTA) || (tag.encryption==0))
+      {
+        PVR->TransferChannelEntry(handle, &tag);
+      }
     }
   }
 
@@ -526,7 +546,14 @@ PVR_ERROR cPVRClientMediaPortal::RequestRecordingsList(PVRHANDLE handle)
   if (!IsUp())
     return PVR_ERROR_SERVER_ERROR;
 
-  result = SendCommand("ListRecordings:\n");
+  if(g_bResolveRTSPHostname == false)
+  {
+    result = SendCommand("ListRecordings:False\n");
+  }
+  else
+  {
+    result = SendCommand("ListRecordings\n");
+  }
 
   Tokenize(result, lines, ",");
 
@@ -555,7 +582,7 @@ PVR_ERROR cPVRClientMediaPortal::RequestRecordingsList(PVRHANDLE handle)
       tag.stream_url      = recording.Stream();
       tag.title           = recording.Title();
       tag.subtitle        = tag.title;
-      tag.directory       = "";
+      tag.directory       = ""; //used in XBMC as directory structure below "Server X - hostname"
 
       PVR->TransferRecordingEntry(handle, &tag);
     }
@@ -863,7 +890,8 @@ PVR_ERROR cPVRClientMediaPortal::UpdateTimer(const PVR_TIMERINFO &timerinfo)
 /** Live stream handling */
 
 // The MediaPortal TV Server uses rtsp streams which XBMC can handle directly
-// so we don't need to open the streams in this pvr addon.
+// via the dvdplayer (ffmpeg) so we don't need to open the streams in this
+// pvr addon.
 // However, we still need to request the stream URL for the channel we want
 // to watch as it is not known on beforehand.
 // Most of the times it is the same URL for each selected channel. Only the
@@ -989,7 +1017,7 @@ const char* cPVRClientMediaPortal::GetLiveStreamURL(const PVR_CHANNEL &channelin
   // Server plugin, so we can request the new channel stream directly without
   // stopping the existing stream
 
-  if(m_bResolveRTSPHostname == false)
+  if(g_bResolveRTSPHostname == false)
   {
     if (g_iTVServerXBMCBuild < 90)
     { //old way
@@ -1021,10 +1049,10 @@ const char* cPVRClientMediaPortal::GetLiveStreamURL(const PVR_CHANNEL &channelin
   }
   else
   {
-    if (m_iSleepOnRTSPurl > 0)
+    if (g_iSleepOnRTSPurl > 0)
     {
-      XBMC->Log(LOG_INFO, "Sleeping %i ms before opening stream: %s", m_iSleepOnRTSPurl, result.c_str());
-      usleep(m_iSleepOnRTSPurl * 1000);
+      XBMC->Log(LOG_DEBUG, "Sleeping %i ms before opening stream: %s", g_iSleepOnRTSPurl, result.c_str());
+      usleep(g_iSleepOnRTSPurl * 1000);
     }
 
     vector<string> timeshiftfields;
