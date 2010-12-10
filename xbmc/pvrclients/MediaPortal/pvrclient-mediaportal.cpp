@@ -579,11 +579,26 @@ PVR_ERROR cPVRClientMediaPortal::RequestRecordingsList(PVRHANDLE handle)
       tag.recording_time  = recording.StartTime();
       tag.duration        = (int) recording.Duration();
       tag.description     = recording.Description();
-      tag.stream_url      = recording.Stream();
       tag.title           = recording.Title();
       tag.subtitle        = tag.title;
       tag.directory       = ""; //used in XBMC as directory structure below "Server X - hostname"
 
+      if (g_bUseRecordingsDir == true)
+      { //Replace path by given path in g_szRecordingsDir
+        if (g_szRecordingsDir.length() > 0)
+        {
+          recording.SetDirectory(g_szRecordingsDir);
+          tag.stream_url  = recording.FilePath();
+        }
+        else
+        {
+          tag.stream_url  = recording.FilePath();
+        }
+      }
+      else
+      {
+        tag.stream_url    = recording.Stream();
+      }
       PVR->TransferRecordingEntry(handle, &tag);
     }
   }
@@ -619,9 +634,9 @@ PVR_ERROR cPVRClientMediaPortal::RenameRecording(const PVR_RECORDINGINFO &recinf
   if (!IsUp())
     return PVR_ERROR_SERVER_ERROR;
 
-  snprintf(command, 512, "UpdateRecording:%i,%s\n",
+  snprintf(command, 512, "UpdateRecording:%i|%s\n",
     recinfo.index,
-    newname);
+    uri::encode(uri::PATH_TRAITS, newname).c_str());
 
   result = SendCommand(command);
 
