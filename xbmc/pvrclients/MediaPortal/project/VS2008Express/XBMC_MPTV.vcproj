@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\..\..\addons\library.xbmc.addon;..\..\..\..\..\addons\library.xbmc.pvr;..\..\..\..\addons\include;."
+				AdditionalIncludeDirectories="..\..\windows\libXBMC_addon;..\..\windows\libXBMC_pvr;..\..\..\..\addons\include;.;..\..\..\..\cores\dvdplayer\DVDDemuxers"
 				PreprocessorDefinitions="_WIN32;_DEBUG;_WINDOWS;MPTV_EXPORTS;_WIN32PC;_WINSOCKAPI_;_USE_32BIT_TIME_T"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -66,7 +66,7 @@
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="false"
 				AdditionalDependencies="ws2_32.lib"
-				OutputFile="../../../../../addons/pvr.team-mediaportal.tvserver/XBMC_MPTV_win32.pvr"
+				OutputFile="..\..\..\..\..\addons\pvr.team-mediaportal.tvserver\XBMC_MPTV_win32.pvr"
 				LinkIncremental="2"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
@@ -127,7 +127,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\..\..\addons\library.xbmc.addon;..\..\..\..\..\addons\library.xbmc.pvr;..\..\..\..\addons\include;."
+				AdditionalIncludeDirectories="..\..\windows\libXBMC_addon;..\..\windows\libXBMC_pvr;..\..\..\..\addons\include;.;..\..\..\..\cores\dvdplayer\DVDDemuxers"
 				PreprocessorDefinitions="_WIN32;_WINDOWS;MPTV_EXPORTS;_WIN32PC;_WINSOCKAPI_;_USE_32BIT_TIME_T"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="0"
@@ -149,7 +149,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib"
-				OutputFile="../../../../../addons/pvr.team-mediaportal.tvserver/XBMC_MPTV_win32.pvr"
+				OutputFile="..\..\..\..\..\addons\pvr.team-mediaportal.tvserver\XBMC_MPTV_win32.pvr"
 				LinkIncremental="2"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="false"
@@ -202,10 +202,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\..\addons\library.xbmc.addon\dlfcn-win32.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\epg.cpp"
 				>
 			</File>
@@ -229,6 +225,26 @@
 				RelativePath="..\..\utils.cpp"
 				>
 			</File>
+			<Filter
+				Name="windows"
+				>
+				<Filter
+					Name="libXBMC_addon"
+					>
+					<File
+						RelativePath="..\..\windows\libXBMC_addon\libXBMC_addon.cpp"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="libXBMC_pvr"
+					>
+					<File
+						RelativePath="..\..\windows\libXBMC_pvr\libXBMC_pvr.cpp"
+						>
+					</File>
+				</Filter>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -244,10 +260,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\..\addons\library.xbmc.addon\dlfcn-win32.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\epg.h"
 				>
 			</File>
@@ -257,10 +269,6 @@
 			</File>
 			<File
 				RelativePath="..\..\pvrclient-mediaportal_os.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\windows\pvrclient-mediaportal_os_windows.h"
 				>
 			</File>
 			<File
@@ -283,6 +291,34 @@
 				RelativePath="..\..\utils.h"
 				>
 			</File>
+			<Filter
+				Name="windows"
+				>
+				<File
+					RelativePath="..\..\windows\pvrclient-mediaportal_os_windows.h"
+					>
+				</File>
+				<Filter
+					Name="libXBMC_addon"
+					>
+					<File
+						RelativePath="..\..\windows\libXBMC_addon\AddonHelpers_local.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\windows\libXBMC_addon\libXBMC_addon.h"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="libXBMC_pvr"
+					>
+					<File
+						RelativePath="..\..\windows\libXBMC_pvr\libXBMC_pvr.h"
+						>
+					</File>
+				</Filter>
+			</Filter>
 		</Filter>
 		<File
 			RelativePath="..\..\README"
