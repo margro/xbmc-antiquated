@@ -39,6 +39,8 @@
 #define DEFAULT_RESOLVE_RTSP_HOSTNAME true
 #define DEFAULT_READ_GENRE            false
 #define DEFAULT_SLEEP_RTSP_URL        0
+#define DEFAULT_USE_REC_DIR           false
+#define DEFAULT_REC_DIR               ""
 #define DEFAULT_TVGROUP               ""
 #define DEFAULT_RADIOGROUP            ""
 
@@ -59,6 +61,8 @@ extern bool         g_bNoBadChannels;
 extern bool         g_bHandleMessages;
 extern bool         g_bResolveRTSPHostname;
 extern bool         g_bReadGenre;
+extern bool         g_bUseRecordingsDir;
+extern std::string  g_szRecordingsDir;
 extern std::string  g_szTVGroup;
 extern std::string  g_szRadioGroup;
 

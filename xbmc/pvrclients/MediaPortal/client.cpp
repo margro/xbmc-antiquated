@@ -39,6 +39,8 @@ bool        g_bNoBadChannels       = DEFAULT_BADCHANNELS;
 bool        g_bHandleMessages      = DEFAULT_HANDLE_MSG;   ///< Send VDR's OSD status messages to XBMC OSD
 bool        g_bResolveRTSPHostname = DEFAULT_RESOLVE_RTSP_HOSTNAME; ///< Resolve the server hostname in the rtsp URLs to an IP at the TV Server side (default: false)
 bool        g_bReadGenre           = DEFAULT_READ_GENRE;   ///< Read the genre strings from MediaPortal and translate them into XBMC DVB genre id's (only English)
+bool        g_bUseRecordingsDir    = DEFAULT_USE_REC_DIR;  ///< Use a normal directory if true for recordings
+std::string g_szRecordingsDir      = DEFAULT_REC_DIR;      ///< The path to the recordings directory
 std::string g_szTVGroup            = DEFAULT_TVGROUP;      ///< Import only TV channels from this TV Server TV group
 std::string g_szRadioGroup         = DEFAULT_RADIOGROUP;   ///< Import only radio channels from this TV Server radio group
 
@@ -181,6 +183,22 @@ ADDON_STATUS Create(void* hdl, void* props)
     g_iSleepOnRTSPurl = DEFAULT_SLEEP_RTSP_URL;
   }
 
+  /* Read setting "userecordingsdir" from settings.xml */
+  if (!XBMC->GetSetting("userecordingsdir", &g_bUseRecordingsDir))
+  {
+    /* If setting is unknown fallback to defaults */
+    XBMC->Log(LOG_ERROR, "Couldn't get 'userecordingsdir' setting, falling back to 'false' as default");
+    g_bReadGenre = DEFAULT_USE_REC_DIR;
+  }
+
+  if (!XBMC->GetSetting("recordingsdir", &buffer))
+  {
+    /* If setting is unknown fallback to defaults */
+    XBMC->Log(LOG_ERROR, "Couldn't get 'recordingsdir' setting, falling back to '%s' as default", DEFAULT_REC_DIR);
+  } else {
+    g_szRecordingsDir = buffer;
+  }
+
   /* Create connection to MediaPortal XBMC TV client */
   if (!g_client->Connect())
   {
@@ -319,6 +337,16 @@ ADDON_STATUS SetSetting(const char *settingName, const void *settingValue)
   {
     XBMC->Log(LOG_INFO, "Changed setting 'sleeponrtspurl' from %u to %u", g_iSleepOnRTSPurl, *(int*) settingValue);
     g_iSleepOnRTSPurl = *(int*) settingValue;
+  }
+  else if (str == "userecordingsdir")
+  {
+    XBMC->Log(LOG_INFO, "Changed setting 'userecordingsdir' from %u to %u", g_bUseRecordingsDir, *(bool*) settingValue);
+    g_bUseRecordingsDir = *(bool*) settingValue;
+  }
+  else if (str == "recordingsdir")
+  {
+    XBMC->Log(LOG_INFO, "Changed setting 'recordingsdir' from %s to %s", g_szRecordingsDir.c_str(), (const char*) settingValue);
+    g_szRecordingsDir = (const char*) settingValue;
   }
 
   return STATUS_OK;
