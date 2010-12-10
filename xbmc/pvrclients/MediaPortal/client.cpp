@@ -35,8 +35,8 @@ int g_clientID          = -1;
  * Default values are defined inside client.h
  * and exported to the other source files.
  */
-std::string m_sHostname     = DEFAULT_HOST;
-int m_iPort                 = DEFAULT_PORT;
+std::string g_szHostname           = DEFAULT_HOST;         ///< The Host name or IP of the MediaPortal TV Server
+int         g_iPort                = DEFAULT_PORT;         ///< The TVServerXBMC listening port (default: 9596)
 bool m_bOnlyFTA             = DEFAULT_FTA_ONLY;
 bool m_bRadioEnabled        = DEFAULT_RADIO;
 bool m_bCharsetConv         = DEFAULT_CHARCONV;
@@ -91,20 +91,23 @@ ADDON_STATUS Create(void* hdl, void* props)
   char buffer[1024];
 
   if (XBMC->GetSetting("host", &buffer))
-    m_sHostname = buffer;
+  {
+    g_szHostname = buffer;
+    uri::decode(g_szHostname);
+  }
   else
   {
     /* If setting is unknown fallback to defaults */
     XBMC->Log(LOG_ERROR, "Couldn't get 'host' setting, falling back to '127.0.0.1' as default");
-    m_sHostname = DEFAULT_HOST;
+    g_szHostname = DEFAULT_HOST;
   }
 
   /* Read setting "port" from settings.xml */
-  if (!XBMC->GetSetting("port", &m_iPort))
+  if (!XBMC->GetSetting("port", &g_iPort))
   {
     /* If setting is unknown fallback to defaults */
     XBMC->Log(LOG_ERROR, "Couldn't get 'port' setting, falling back to '9596' as default");
-    m_iPort = DEFAULT_PORT;
+    g_iPort = DEFAULT_PORT;
   }
 
   /* Read setting "ftaonly" from settings.xml */
@@ -252,18 +255,18 @@ ADDON_STATUS SetSetting(const char *settingName, const void *settingValue)
   if (str == "host")
   {
     string tmp_sHostname;
-    XBMC->Log(LOG_INFO, "Changed Setting 'host' from %s to %s", m_sHostname.c_str(), (const char*) settingValue);
-    tmp_sHostname = m_sHostname;
-    m_sHostname = (const char*) settingValue;
-    if (tmp_sHostname != m_sHostname)
+    XBMC->Log(LOG_INFO, "Changed Setting 'host' from %s to %s", g_szHostname.c_str(), (const char*) settingValue);
+    tmp_sHostname = g_szHostname;
+    g_szHostname = (const char*) settingValue;
+    if (tmp_sHostname != g_szHostname)
       return STATUS_NEED_RESTART;
   }
   else if (str == "port")
   {
-    XBMC->Log(LOG_INFO, "Changed Setting 'port' from %u to %u", m_iPort, *(int*) settingValue);
-    if (m_iPort != *(int*) settingValue)
+    XBMC->Log(LOG_INFO, "Changed Setting 'port' from %u to %u", g_iPort, *(int*) settingValue);
+    if (g_iPort != *(int*) settingValue)
     {
-      m_iPort = *(int*) settingValue;
+      g_iPort = *(int*) settingValue;
       return STATUS_NEED_RESTART;
     }
   }
