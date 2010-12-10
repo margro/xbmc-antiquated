@@ -42,8 +42,8 @@
 #define DEFAULT_SLEEP_RTSP_URL        0
 
 extern bool         m_bCreated;
-extern std::string  m_sHostname;
-extern int          m_iPort;
+extern std::string  g_szHostname;
+extern int          g_iPort;
 extern bool         m_bOnlyFTA;
 extern bool         m_bRadioEnabled;
 extern bool         m_bCharsetConv;

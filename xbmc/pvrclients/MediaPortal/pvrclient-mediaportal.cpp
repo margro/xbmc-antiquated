@@ -32,6 +32,9 @@
 
 using namespace std;
 
+//Globals
+int g_iTVServerXBMCBuild = 0;
+
 /************************************************************/
 /** Class interface */
 
@@ -124,8 +127,8 @@ bool cPVRClientMediaPortal::Connect()
 {
   string result;
 
-  /* Open Connection to MediaPortal Backend TV Server via the XBMC TV Server plugin*/
-  XBMC->Log(LOG_DEBUG, "Connect() - Connecting to %s:%i", m_sHostname.c_str(), m_iPort);
+  /* Open Connection to MediaPortal Backend TV Server via the XBMC TV Server plugin */
+  XBMC->Log(LOG_INFO, "Connect() - Connecting to %s:%i", g_szHostname.c_str(), g_iPort);
 
   if (!m_tcpclient->create())
   {
@@ -133,23 +136,24 @@ bool cPVRClientMediaPortal::Connect()
     return false;
   }
 
-  if (!m_tcpclient->connect(m_sHostname, m_iPort))
+  if (!m_tcpclient->connect(g_szHostname, g_iPort))
   {
     XBMC->Log(LOG_ERROR, "Connect() - Could not connect to MPTV backend");
     return false;
   }
 
   m_tcpclient->set_non_blocking(1);
+  XBMC->Log(LOG_INFO, "Connected to %s:%i", g_szHostname.c_str(), g_iPort);
 
   result = SendCommand("PVRclientXBMC:0-1\n");
 
   if(result.find("Unexpected protocol") != std::string::npos)
   {
-    XBMC->Log(LOG_DEBUG, "TVServer does not accept protocol: PVRclientXBMC:0-1");
+    XBMC->Log(LOG_ERROR, "TVServer does not accept protocol: PVRclientXBMC:0-1");
     return false;
   } else {
     vector<string> fields;
-    int major = 0, minor = 0, revision = 0 , build = 0;
+    int major = 0, minor = 0, revision = 0;
     int count = 0;
 
     // Check the version of the TVServerXBMC plugin:
@@ -157,14 +161,14 @@ bool cPVRClientMediaPortal::Connect()
     if(fields.size() == 2)
     {
       // Ok, this TVServerXBMC version answers with a version string
-      count = sscanf(fields[1].c_str(), "%d.%d.%d.%d", &major, &minor, &revision, &build);
+      count = sscanf(fields[1].c_str(), "%d.%d.%d.%d", &major, &minor, &revision, &g_iTVServerXBMCBuild);
       if( count < 4 )
       {
         XBMC->Log(LOG_ERROR, "Connect() - Could not parse the TVServerXBMC version string '%s'", fields[1].c_str());
         return false;
       }
       // Check for the minimal requirement: 1.1.0.70
-      if( build < 70 ) //major < 1 || minor < 1 || revision < 0 || build < 70
+      if( g_iTVServerXBMCBuild < 70 ) //major < 1 || minor < 1 || revision < 0 || build < 70
       {
         XBMC->Log(LOG_ERROR, "Error: Your TVServerXBMC version '%s' is too old. Please upgrade to 1.1.0.70 or higher!", fields[1].c_str());
         return false;
@@ -174,7 +178,7 @@ bool cPVRClientMediaPortal::Connect()
         XBMC->Log(LOG_INFO, "Your TVServerXBMC version is '%s'", fields[1].c_str());
         
         // Advice to upgrade:
-        if( build < 100 )
+        if( g_iTVServerXBMCBuild < 100 )
         {
           XBMC->Log(LOG_INFO, "It is adviced to upgrade your TVServerXBMC version '%s' to 1.1.0.100 or higher!", fields[1].c_str());
         }
@@ -186,7 +190,7 @@ bool cPVRClientMediaPortal::Connect()
   }
 
   char buffer[512];
-  snprintf(buffer, 512, "%s:%i", m_sHostname.c_str(), m_iPort);
+  snprintf(buffer, 512, "%s:%i", g_szHostname.c_str(), g_iPort);
   m_ConnectionString = buffer;
 
   m_bConnected = true;
@@ -247,7 +251,9 @@ void* cPVRClientMediaPortal::Process(void*)
 const char* cPVRClientMediaPortal::GetBackendName()
 {
   if (!m_tcpclient->is_valid())
-    return m_sHostname.c_str();
+  {
+    return g_szHostname.c_str();
+  }
 
   XBMC->Log(LOG_DEBUG, "->GetBackendName()");
 
@@ -309,7 +315,7 @@ PVR_ERROR cPVRClientMediaPortal::GetMPTVTime(time_t *localTime, int *gmtOffset)
 
   Tokenize(result, fields, "|");
 
-  if(fields.size() == 3)
+  if(fields.size() >= 3)
   {
     //From CPVREpg::CPVREpg(): Expected PVREpg GMT offset is in seconds
     m_BackendUTCoffset = ((atoi(fields[1].c_str()) * 60) + atoi(fields[2].c_str())) * 60;
@@ -986,14 +992,26 @@ const char* cPVRClientMediaPortal::GetLiveStreamURL(const PVR_CHANNEL &channelin
 
   if(m_bResolveRTSPHostname == false)
   {
-    // RTSP URL may contain a hostname, XBMC will do the IP resolve
-    snprintf(command, 256, "TimeshiftChannel:%i|False\n", channel);
+    if (g_iTVServerXBMCBuild < 90)
+    { //old way
+      // RTSP URL may contain a hostname, XBMC will do the IP resolve
+      snprintf(command, 256, "TimeshiftChannel:%i|False\n", channel);
+    } else {
+      //Faster, skip StopTimeShift
+      snprintf(command, 256, "TimeshiftChannel:%i|False|False\n", channel);
+    }
   }
   else
   {
-    // RTSP URL will always contain an IP address, TVServerXBMC will
-    // do the IP resolve
-    snprintf(command, 256, "TimeshiftChannel:%i\n", channel);
+    if (g_iTVServerXBMCBuild < 90)
+    { //old way
+      // RTSP URL will always contain an IP address, TVServerXBMC will
+      // do the IP resolve
+      snprintf(command, 256, "TimeshiftChannel:%i|True\n", channel);
+    } else {
+      //Faster, skip StopTimeShift
+      snprintf(command, 256, "TimeshiftChannel:%i|True|False\n", channel);
+    }
   }
   result = SendCommand(command);
 
@@ -1010,15 +1028,19 @@ const char* cPVRClientMediaPortal::GetLiveStreamURL(const PVR_CHANNEL &channelin
       usleep(m_iSleepOnRTSPurl * 1000);
     }
 
-    XBMC->Log(LOG_INFO, "Channel stream URL: %s", result.c_str());
+    vector<string> timeshiftfields;
+
+    Tokenize(result, timeshiftfields, "|");
+
+    XBMC->Log(LOG_INFO, "Channel stream URL: %s", timeshiftfields[0].c_str());
     m_iCurrentChannel = channel;
-    m_ConnectionString = result;
+    m_ConnectionString = timeshiftfields[0];
 
     // Check the returned stream URL. When the URL is an rtsp stream, we need
     // to close it again after watching to stop the timeshift.
     // A radio web stream (added to the TV Server) will return the web stream
     // URL without starting a timeshift.
-    if(result.compare(0,4, "rtsp") == 0)
+    if(timeshiftfields[0].compare(0,4, "rtsp") == 0)
     {
       m_bTimeShiftStarted = true;
     }
