@@ -161,14 +161,27 @@ bool cPVRClientMediaPortal::Connect()
       if( count < 4 )
       {
         XBMC->Log(LOG_ERROR, "Connect() - Could not parse the TVServerXBMC version string '%s'", fields[1].c_str());
+        return false;
       }
-      // Check for the minimal requirement: 1.0.7.x
-      if( major < 1 || minor < 0 || revision < 7 )
+      // Check for the minimal requirement: 1.1.0.70
+      if( build < 70 ) //major < 1 || minor < 1 || revision < 0 || build < 70
       {
-        XBMC->Log(LOG_ERROR, "Warning: Your TVServerXBMC version '%s' is too old. Please upgrade to 1.0.7.0 or higher!", fields[1].c_str());
+        XBMC->Log(LOG_ERROR, "Error: Your TVServerXBMC version '%s' is too old. Please upgrade to 1.1.0.70 or higher!", fields[1].c_str());
+        return false;
+      }
+      else
+      {
+        XBMC->Log(LOG_INFO, "Your TVServerXBMC version is '%s'", fields[1].c_str());
+        
+        // Advice to upgrade:
+        if( build < 100 )
+        {
+          XBMC->Log(LOG_INFO, "It is adviced to upgrade your TVServerXBMC version '%s' to 1.1.0.100 or higher!", fields[1].c_str());
+        }
       }
     } else {
-      XBMC->Log(LOG_ERROR, "Warning: Your TVServerXBMC version is too old. Please upgrade.");
+      XBMC->Log(LOG_ERROR, "Error: Your TVServerXBMC version is too old. Please upgrade.");
+      return false;
     }
   }
 
