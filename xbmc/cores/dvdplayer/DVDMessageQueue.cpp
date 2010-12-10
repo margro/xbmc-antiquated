@@ -166,7 +166,8 @@ MsgQueueReturnCode CDVDMessageQueue::Get(CDVDMsg** pMsg, unsigned int iTimeoutIn
 
   if(m_list.empty() && m_bEmptied == false && priority == 0 && m_owner != "teletext")
   {
-    CLog::Log(LOGWARNING, "CDVDMessageQueue(%s)::Get - asked for new data packet, with nothing available", m_owner.c_str());
+    //margro: don't spam the log
+    //CLog::Log(LOGDEBUG, "CDVDMessageQueue(%s)::Get - asked for new data packet, with nothing available", m_owner.c_str());
     m_bEmptied = true;
   }
 
