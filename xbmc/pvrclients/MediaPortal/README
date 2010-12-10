@@ -1,7 +1,10 @@
 XBMC MediaPortal TV-client ('MPTV') PVR Add-on
 ----------------------------------------------
-Supported platforms (pvrclient): Windows
-(Linux, OSX: work in progress)
+Supported platforms (pvrclient):
+- Windows
+- Linux
+- OSX (should work, not tested by me)
+
 Dependencies:
 - MediaPortal TVServer 1.1.0 or higher
 - TVServerXBMC v1.1.0.75 or higher
@@ -135,7 +138,17 @@ sleeponrtspurl: "Wait after tuning a channel (ms)"
   available. Typical symptom: the channel doesn't play the first time, but it
   does play the second time.
   Default: 0 (milliseconds)
-
+userecordingsdir: "Play recordings directly (no streaming)"
+  By default, the recordings are played via rtsp:// streaming, which is not
+  needed when the TV Server and XBMC are running on the same machine.
+  When you enable this option, XBMC will use the filename of the recording
+  for playback instead of the rtsp::// url.
+  Default: false
+recordingsdir: "Mediaportal recordings directory"
+  The previous setting can also be used on a different pc by sharing the
+  recordings directory over the network. You can use this option to specify
+  where XBMC can find the recordings.
+  Default: <empty>
 ----------------------------------------------
 Troubleshooting:
 TODO...

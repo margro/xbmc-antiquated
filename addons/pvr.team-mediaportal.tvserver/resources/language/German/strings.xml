@@ -11,4 +11,7 @@
     <string id="30007">Importiere nur Radiokanäle aus Gruppe</string>
     <string id="30008">Konvertiere Hostname nach IP-Adresse</string>
     <string id="30009">EPG: Genre Texte hochladen (langsam)</string>
+    <string id="30010">Wartezeit, nachdem ein Kanal abgestimmt worden ist (ms)</string>
+    <string id="30011">Aufnahmen aus Ordner lesen</string>
+    <string id="30012">Mediaportal Aufnahmeordner</string>
 </strings>
