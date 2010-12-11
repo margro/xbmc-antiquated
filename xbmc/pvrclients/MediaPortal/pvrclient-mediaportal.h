@@ -1,11 +1,7 @@
 #pragma once
-
-#ifndef __PVRCLIENT_MEDIAPORTAL_H__
-#define __PVRCLIENT_MEDIAPORTAL_H__
-
 /*
  *      Copyright (C) 2005-2010 Team XBMC
- *      http://xbmc.org
+ *      http://www.xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,9 +14,7 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, write to
- *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
- *  http://www.gnu.org/copyleft/gpl.html
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -33,7 +27,7 @@
 #include <vector>
 
 /* Master defines for client control */
-#ifndef _WINSOCKAPI_
+#ifndef _WINSOCKAPI_ //Prevent redefine warnings
 #define _WINSOCKAPI_ //Needed here to prevent inclusion of <winsock.h> via the header below
 #endif
 #include "../../addons/include/xbmc_pvr_types.h"
@@ -131,9 +125,7 @@ private:
 
   void Close();
 
-  //MG: Added for TVServer communication:
+  //Used for TV Server communication:
   std::string SendCommand(std::string command);
   bool SendCommand2(std::string command, int& code, std::vector<std::string>& lines);
 };
-
-#endif // __PVRCLIENT_MEDIAPORTAL_H__
