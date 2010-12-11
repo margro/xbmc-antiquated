@@ -686,23 +686,10 @@ PVR_ERROR cPVRClientMediaPortal::RequestTimerList(PVRHANDLE handle)
     XBMC->Log(LOG_DEBUG, "SCHEDULED: %s", data.c_str() );
 
     cTimer timer;
-    timer.ParseLine(data.c_str());
-
-    //TODO: finish me...
     PVR_TIMERINFO tag;
-    tag.index       = timer.Index();
-    tag.active      = true; //false; //timer.HasFlags(tfActive);
-    tag.channelNum  = timer.Channel();
-    tag.firstday    = 0; //timer.FirstDay();
-    tag.starttime   = timer.StartTime();
-    tag.endtime     = timer.StopTime();
-    tag.recording   = 0; //timer.HasFlags(tfRecording) || timer.HasFlags(tfInstant);
-    tag.title       = timer.Title();
-    tag.directory   = timer.Dir();
-    tag.priority    = timer.Priority();
-    tag.lifetime    = 0; //timer.Lifetime();
-    tag.repeat      = false; //timer.WeekDays() == 0 ? false : true;
-    tag.repeatflags = 0;//timer.WeekDays();
+
+    timer.ParseLine(data.c_str());
+    timer.GetPVRtimerinfo(tag);
 
     PVR->TransferTimerEntry(handle, &tag);
   }
@@ -720,32 +707,19 @@ PVR_ERROR cPVRClientMediaPortal::GetTimerInfo(unsigned int timernumber, PVR_TIME
   if (!IsUp())
     return PVR_ERROR_SERVER_ERROR;
 
-  snprintf(command,256, "GetTimerInfo:%i\n", timernumber);
+  snprintf(command, 256, "GetScheduleInfo:%i\n", timernumber);
 
   result = SendCommand(command);
 
   cTimer timer;
   timer.ParseLine(result.c_str());
-  //TODO: finish me...
-  tag.index = timer.Index();
-  tag.active = true; //false; //timer.HasFlags(tfActive);
-  tag.channelNum = timer.Channel();
-  tag.firstday = 0; //timer.FirstDay();
-  tag.starttime = timer.StartTime();
-  tag.endtime = timer.StopTime();
-  tag.recording = 0; //timer.HasFlags(tfRecording) || timer.HasFlags(tfInstant);
-  tag.title = timer.Title();
-  tag.priority = timer.Priority();
-  tag.lifetime = 0; //timer.Lifetime();
-  tag.repeat = false; //timer.WeekDays() == 0 ? false : true;
-  tag.repeatflags = 0;//timer.WeekDays();
+  timer.GetPVRtimerinfo(tag);
 
   return PVR_ERROR_NO_ERROR;
 }
 
 PVR_ERROR cPVRClientMediaPortal::AddTimer(const PVR_TIMERINFO &timerinfo)
 {
-  char           command[1024];
   string         result;
 
 #ifdef _TIME32_T_DEFINED
@@ -754,33 +728,14 @@ PVR_ERROR cPVRClientMediaPortal::AddTimer(const PVR_TIMERINFO &timerinfo)
   XBMC->Log(LOG_DEBUG, "->AddTimer Channel: %i, 64 bit times not yet supported!", timerinfo.channelNum);
 #endif
 
-  struct tm starttime;
-  struct tm endtime;
-
   if (!IsUp())
     return PVR_ERROR_SERVER_ERROR;
 
-  starttime = *gmtime( &timerinfo.starttime );
-  XBMC->Log(LOG_DEBUG, "Start time %s", asctime(&starttime));
+ cTimer timer(timerinfo);
 
-  endtime = *gmtime( &timerinfo.endtime );
-  XBMC->Log(LOG_DEBUG, "End time %s", asctime(&endtime));
-
-
-  CStdString title = timerinfo.title;
-  title.Replace("|","");  //Remove commas from title field
-
-  snprintf(command, 1024, "AddSchedule:%i|%s|%i|%i|%i|%i|%i|%i|%i|%i|%i|%i|%i|%i\n",
-          timerinfo.channelNum,                                              //Channel number
-          title.c_str(),                                                     //Program title
-          starttime.tm_year + 1900, starttime.tm_mon + 1, starttime.tm_mday, //Start date
-          starttime.tm_hour, starttime.tm_min, starttime.tm_sec,             //Start time
-          endtime.tm_year + 1900, endtime.tm_mon + 1, endtime.tm_mday,       //End date
-          endtime.tm_hour, endtime.tm_min, endtime.tm_sec);                  //End time
-
-  if (timerinfo.index == -1)
-  {
-    result = SendCommand(command);
+  //if (timerinfo.index == -1)
+  //{ // New timer
+    result = SendCommand(timer.AddScheduleCommand());
 
     if(result.find("True") ==  string::npos)
     {
@@ -788,13 +743,12 @@ PVR_ERROR cPVRClientMediaPortal::AddTimer(const PVR_TIMERINFO &timerinfo)
       return PVR_ERROR_NOT_SAVED;
     }
     XBMC->Log(LOG_DEBUG, "AddTimer for channel: %i [done]", timerinfo.channelNum);
-  }
-  else
-  {
-    // Modified timer
-    XBMC->Log(LOG_DEBUG, "AddTimer Modify timer for channel: %i; Not yet supported!");
-    return PVR_ERROR_NOT_SAVED;
-  }
+  //}
+  //else
+  //{
+  //  // Modified timer
+  //  return UpdateTimer(timerinfo);
+  //}
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -836,7 +790,7 @@ PVR_ERROR cPVRClientMediaPortal::DeleteTimer(const PVR_TIMERINFO &timerinfo, boo
 
 PVR_ERROR cPVRClientMediaPortal::RenameTimer(const PVR_TIMERINFO &timerinfo, const char *newname)
 {
-  XBMC->Log(LOG_DEBUG, "RenameTimer %i for channel: %i; Not yet supported!", timerinfo.index, timerinfo.channelNum);
+  XBMC->Log(LOG_DEBUG, "RenameTimer %i for channel: %i", timerinfo.index, timerinfo.channelNum);
   if (!IsUp())
     return PVR_ERROR_SERVER_ERROR;
 
@@ -851,17 +805,10 @@ PVR_ERROR cPVRClientMediaPortal::RenameTimer(const PVR_TIMERINFO &timerinfo, con
 
 PVR_ERROR cPVRClientMediaPortal::UpdateTimer(const PVR_TIMERINFO &timerinfo)
 {
-  char           command[1024];
   string         result;
 
-  struct tm starttime;
-  struct tm endtime;
-
-  //TODO: timerinfo.file bevat troep. Nakijken. => gefixed
-  //TODO: bij opname Journaal 18:00-18:15 => 17:58-19:25 ??? Hmmz, dit klopt niet toch? => gefixed
-
 #ifdef _TIME32_T_DEFINED
-  XBMC->Log(LOG_DEBUG, "->Updateimer Index: %i Channel: %i, starttime: %i endtime: %i program: %s", timerinfo.index, timerinfo.channelNum, timerinfo.starttime, timerinfo.endtime, timerinfo.title);
+  XBMC->Log(LOG_DEBUG, "->UpdateTimer Index: %i Channel: %i, starttime: %i endtime: %i program: %s", timerinfo.index, timerinfo.channelNum, timerinfo.starttime, timerinfo.endtime, timerinfo.title);
 #else
   XBMC->Log(LOG_DEBUG, "->UpdateTimer Channel: %i, 64 bit times not yet supported!", timerinfo.channelNum);
 #endif
@@ -869,33 +816,15 @@ PVR_ERROR cPVRClientMediaPortal::UpdateTimer(const PVR_TIMERINFO &timerinfo)
   if (!IsUp())
     return PVR_ERROR_SERVER_ERROR;
 
-  starttime = *gmtime( &timerinfo.starttime );
-  XBMC->Log(LOG_DEBUG, "Start time %s", asctime(&starttime));
+  cTimer timer(timerinfo);
 
-  endtime = *gmtime( &timerinfo.endtime );
-  XBMC->Log(LOG_DEBUG, "End time %s", asctime(&endtime));
-
-  CStdString title = timerinfo.title;
-  title.Replace(",","");  //Remove commas from title field
-
-  snprintf(command, 1024, "UpdateSchedule:%i|%i|%i|%s|%i|%i|%i|%i|%i|%i|%i|%i|%i|%i|%i|%i\n",
-          timerinfo.index,                                                   //Schedule index
-          timerinfo.active,                                                  //Active
-          timerinfo.channelNum,                                              //Channel number
-          title.c_str(),                                                     //Program title
-          starttime.tm_year + 1900, starttime.tm_mon + 1, starttime.tm_mday, //Start date
-          starttime.tm_hour, starttime.tm_min, starttime.tm_sec,             //Start time
-          endtime.tm_year + 1900, endtime.tm_mon + 1, endtime.tm_mday,       //End date
-          endtime.tm_hour, endtime.tm_min, endtime.tm_sec);                  //End time
-
-  result = SendCommand(command);
-
+  result = SendCommand(timer.UpdateScheduleCommand());
   if(result.find("True") ==  string::npos)
   {
-    XBMC->Log(LOG_DEBUG, "AddTimer for channel: %i [failed]", timerinfo.channelNum);
+    XBMC->Log(LOG_DEBUG, "UpdateTimer for channel: %i [failed]", timerinfo.channelNum);
     return PVR_ERROR_NOT_SAVED;
   }
-  XBMC->Log(LOG_DEBUG, "AddTimer for channel: %i [done]", timerinfo.channelNum);
+  XBMC->Log(LOG_DEBUG, "UpdateTimer for channel: %i [done]", timerinfo.channelNum);
 
   return PVR_ERROR_NO_ERROR;
 }
