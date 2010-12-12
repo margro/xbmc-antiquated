@@ -22,7 +22,7 @@
 * for DESCRIPTION see 'PVRClient-MediaPortal.cpp'
 */
 
-#include "pvrclient-mediaportal_os.h"
+#include "os-dependent.h"
 
 #include <vector>
 
@@ -34,6 +34,10 @@
 
 /* Local includes */
 #include "Socket.h"
+
+#ifdef TSREADER
+#include "TSReader.h"
+#endif
 
 class cPVRClientMediaPortal
 {
@@ -98,20 +102,10 @@ public:
   const char* GetLiveStreamURL(const PVR_CHANNEL &channelinfo);
 
 protected:
-  Socket           *m_tcpclient;
+  MPTV::Socket           *m_tcpclient;
 
 private:
   bool GetChannel(unsigned int number, PVR_CHANNEL &channeldata);
-  /* MediaPortal to XBMC Callback functions; Not yet supported */
-  //static void* CallbackRcvThread(void* arg);
-  //bool VDRToXBMCCommand(char *Cmd);
-  //bool CallBackMODT(const char *Option);
-  //bool CallBackDELT(const char *Option);
-  //bool CallBackADDT(const char *Option);
-  //bool CallBackSMSG(const char *Option);
-  //bool CallBackIMSG(const char *Option);
-  //bool CallBackWMSG(const char *Option);
-  //bool CallBackEMSG(const char *Option);
 
   int                     m_iCurrentChannel;
   bool                    m_bConnected;
@@ -122,7 +116,14 @@ private:
   std::string             m_BackendVersion;
   time_t                  m_BackendUTCoffset;
   time_t                  m_BackendTime;
+#ifdef TSREADER
+  CTsReader*              m_tsreader;
 
+  char                    m_noSignalStreamData[ 6 + 0xffff ];
+  long                    m_noSignalStreamSize;
+  long                    m_noSignalStreamReadPos;
+  bool                    m_bPlayingNoSignal;
+#endif //TSREADER
   void Close();
 
   //Used for TV Server communication:

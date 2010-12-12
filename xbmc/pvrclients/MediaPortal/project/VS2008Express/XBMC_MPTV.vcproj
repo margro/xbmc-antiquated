@@ -233,6 +233,54 @@
 				Name="windows"
 				>
 			</Filter>
+			<Filter
+				Name="tsreader"
+				>
+				<File
+					RelativePath="..\..\tsreader\AutoLock.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\CritSec.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\FileReader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\MemoryBuffer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\MemoryReader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\MemorySink.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\MultiFileReader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\RTSPClient.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\TSReader.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\TSThread.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\WaitEvent.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -256,11 +304,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\pvrclient-mediaportal.h"
+				RelativePath="..\..\os-dependent.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\pvrclient-mediaportal_os.h"
+				RelativePath="..\..\pvrclient-mediaportal.h"
 				>
 			</File>
 			<File
@@ -288,6 +336,54 @@
 				>
 				<File
 					RelativePath="..\..\windows\pvrclient-mediaportal_os_windows.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="tsreader"
+				>
+				<File
+					RelativePath="..\..\tsreader\AutoLock.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\CritSec.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\FileReader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\MemoryBuffer.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\MemoryReader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\MemorySink.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\MultiFileReader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\RTSPClient.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\TSReader.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\TSThread.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\tsreader\WaitEvent.h"
 					>
 				</File>
 			</Filter>
