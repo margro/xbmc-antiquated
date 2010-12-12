@@ -78,4 +78,7 @@ namespace uri {
   extern const traits FRAGMENT_TRAITS; ///< fragment traits
 }
 
+std::wstring StringToWString(const std::string& s);
+std::string WStringToString(const std::wstring& s);
+std::string lowercase(const std::string& s);
 bool stringtobool(const std::string& s);

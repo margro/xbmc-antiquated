@@ -207,6 +207,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "python_bz2.pyd", "..\..\xbm
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libhdhomerun_dll", "..\..\xbmc\lib\libhdhomerun\hdhomerun\hdhomerun.vcproj", "{1E2FB608-3DD2-4021-A598-90008FA6DE85}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pvrclient_mptv_tsreader", "..\..\xbmc\pvrclients\MediaPortal\project\VS2008Express\XBMC_MPTV_tsreader.vcproj", "{2C2D2B7F-EC8F-4614-86D9-C0FDA61678CA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug (DirectX)|Win32 = Debug (DirectX)|Win32
@@ -747,6 +749,14 @@ Global
 		{1E2FB608-3DD2-4021-A598-90008FA6DE85}.Release (DirectX)|Win32.Build.0 = Release|Win32
 		{1E2FB608-3DD2-4021-A598-90008FA6DE85}.Release (OpenGL)|Win32.ActiveCfg = Release|Win32
 		{1E2FB608-3DD2-4021-A598-90008FA6DE85}.Release (OpenGL)|Win32.Build.0 = Release|Win32
+		{2C2D2B7F-EC8F-4614-86D9-C0FDA61678CA}.Debug (DirectX)|Win32.ActiveCfg = Debug|Win32
+		{2C2D2B7F-EC8F-4614-86D9-C0FDA61678CA}.Debug (DirectX)|Win32.Build.0 = Debug|Win32
+		{2C2D2B7F-EC8F-4614-86D9-C0FDA61678CA}.Debug (OpenGL)|Win32.ActiveCfg = Debug|Win32
+		{2C2D2B7F-EC8F-4614-86D9-C0FDA61678CA}.Debug (OpenGL)|Win32.Build.0 = Debug|Win32
+		{2C2D2B7F-EC8F-4614-86D9-C0FDA61678CA}.Release (DirectX)|Win32.ActiveCfg = Release|Win32
+		{2C2D2B7F-EC8F-4614-86D9-C0FDA61678CA}.Release (DirectX)|Win32.Build.0 = Release|Win32
+		{2C2D2B7F-EC8F-4614-86D9-C0FDA61678CA}.Release (OpenGL)|Win32.ActiveCfg = Release|Win32
+		{2C2D2B7F-EC8F-4614-86D9-C0FDA61678CA}.Release (OpenGL)|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

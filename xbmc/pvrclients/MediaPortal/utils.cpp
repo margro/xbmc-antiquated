@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#pragma warning(disable:4244) //wchar to char = loss of data
 
 #include "utils.h"
 #include <string>
@@ -240,6 +241,20 @@ time_t GetUTCdifftime(void)
   gm = mktime(timeinfo);
 
   return(local - gm);
+}
+
+std::string WStringToString(const std::wstring& s)
+{
+  std::string temp(s.length(), ' ');
+  std::copy(s.begin(), s.end(), temp.begin());
+  return temp;
+}
+
+std::wstring StringToWString(const std::string& s)
+{
+  std::wstring temp(s.length(),L' ');
+  std::copy(s.begin(), s.end(), temp.begin());
+  return temp;
 }
 
 std::string lowercase(const std::string& s)

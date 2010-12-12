@@ -43,6 +43,7 @@ bool        g_bUseRecordingsDir    = DEFAULT_USE_REC_DIR;  ///< Use a normal dir
 std::string g_szRecordingsDir      = DEFAULT_REC_DIR;      ///< The path to the recordings directory
 std::string g_szTVGroup            = DEFAULT_TVGROUP;      ///< Import only TV channels from this TV Server TV group
 std::string g_szRadioGroup         = DEFAULT_RADIOGROUP;   ///< Import only radio channels from this TV Server radio group
+bool        g_bDirectTSFileRead    = DEFAULT_DIRECT_TS_FR; ///< Open the Live-TV timeshift buffer directly (skip RTSP streaming)
 
 /* Client member variables */
 ADDON_STATUS           m_CurStatus    = STATUS_UNKNOWN;
@@ -79,8 +80,11 @@ ADDON_STATUS Create(void* hdl, void* props)
   if (!PVR->RegisterMe(hdl))
     return STATUS_UNKNOWN;
 
+#ifdef TSREADER
+  XBMC->Log(LOG_DEBUG, "Creating MediaPortal PVR-Client (TSReader version)");
+#else
   XBMC->Log(LOG_DEBUG, "Creating MediaPortal PVR-Client (ffmpeg rtsp version)");
-
+#endif
 
   m_CurStatus    = STATUS_UNKNOWN;
   g_client       = new cPVRClientMediaPortal();
@@ -198,7 +202,17 @@ ADDON_STATUS Create(void* hdl, void* props)
   } else {
     g_szRecordingsDir = buffer;
   }
-
+#ifdef TSREADER
+  /* Read setting "directtsfileread" from settings.xml */
+  if (!XBMC->GetSetting("directtsfileread", &g_bDirectTSFileRead))
+  {
+    /* If setting is unknown fallback to defaults */
+    XBMC->Log(LOG_ERROR, "Couldn't get 'directtsfileread' setting, falling back to 'false' as default");
+    g_bDirectTSFileRead = DEFAULT_DIRECT_TS_FR;
+  }
+#else
+  g_bDirectTSFileRead = false;
+#endif
   /* Create connection to MediaPortal XBMC TV client */
   if (!g_client->Connect())
   {
@@ -348,7 +362,13 @@ ADDON_STATUS SetSetting(const char *settingName, const void *settingValue)
     XBMC->Log(LOG_INFO, "Changed setting 'recordingsdir' from %s to %s", g_szRecordingsDir.c_str(), (const char*) settingValue);
     g_szRecordingsDir = (const char*) settingValue;
   }
-
+#ifdef TSREADER
+  else if (str == "directtsfileread")
+  {
+    XBMC->Log(LOG_INFO, "Changed setting 'directtsfileread' from %u to %u", g_bDirectTSFileRead, *(bool*) settingValue);
+    g_bDirectTSFileRead = *(bool*) settingValue;
+  }
+#endif
   return STATUS_OK;
 }
 
