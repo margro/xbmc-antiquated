@@ -267,7 +267,7 @@ void CRTSPClient::shutdown()
 }
 
 
-bool CRTSPClient::Initialize(CMemoryBuffer& buffer)
+bool CRTSPClient::Initialize(CMemoryBuffer* buffer)
 {
   XBMC->Log(LOG_DEBUG, "CRTSPClient::Initialize()");
   m_buffer = buffer;
@@ -430,7 +430,7 @@ bool CRTSPClient::OpenStream(char* url)
     if (subsession->readSource() == NULL) continue; // was not initiated
     
     // Mediaportal:
-    CMemorySink* fileSink= CMemorySink::createNew(*m_env,m_buffer,fileSinkBufferSize);
+    CMemorySink* fileSink= CMemorySink::createNew(*m_env, *m_buffer, fileSinkBufferSize);
     // XBMC test via file:
     //FileSink* fileSink = FileSink::createNew(*m_env, m_outFileName, fileSinkBufferSize, false); //oneFilePerFrame
 
@@ -466,7 +466,7 @@ void CRTSPClient::Stop()
     StopBufferThread();
   }
   shutdown();
-  m_buffer.Clear();
+  m_buffer->Clear();
   XBMC->Log(LOG_DEBUG, "CRTSPClient:Stop done");
 }
 
@@ -508,12 +508,12 @@ void CRTSPClient::FillBuffer(DWORD byteCount)
 {
   XBMC->Log(LOG_DEBUG, "CRTSPClient::Fillbuffer...%d\n",byteCount);
   DWORD tickCount=GetTickCount();
-  while ( IsRunning() && m_buffer.Size() < byteCount)
+  while ( IsRunning() && m_buffer->Size() < byteCount)
   {
     Sleep(5);
     if (GetTickCount()-tickCount > 3000) break;
   }
-  XBMC->Log(LOG_DEBUG, "CRTSPClient::Fillbuffer...%d/%d\n",byteCount,m_buffer.Size() );
+  XBMC->Log(LOG_DEBUG, "CRTSPClient::Fillbuffer...%d/%d\n", byteCount, m_buffer->Size() );
 }
 
 void CRTSPClient::ThreadProc()
@@ -586,8 +586,8 @@ bool CRTSPClient::Play(double fStart,double fDuration)
   if (m_BufferThreadActive)
   {
     Stop();
-    m_buffer.Clear();
-    if (Initialize()==false) 
+    m_buffer->Clear();
+    if (Initialize(m_buffer)==false) 
     {
       shutdown();
       return false;
@@ -600,8 +600,8 @@ bool CRTSPClient::Play(double fStart,double fDuration)
   }
   if (m_ourClient==NULL||m_session==NULL)
   {
-    m_buffer.Clear();
-    if (Initialize()==false) 
+    m_buffer->Clear();
+    if (Initialize(m_buffer)==false) 
     {
       shutdown();
       return false;

@@ -209,6 +209,11 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libbz2", "..\..\lib\bzip2\libbz2.vcproj", "{BE0618A0-8043-433D-8F65-869267318CF7}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pvrclient_mptv_tsreader", "..\..\xbmc\pvrclients\MediaPortal\project\VS2008Express\XBMC_MPTV_tsreader.vcproj", "{2C2D2B7F-EC8F-4614-86D9-C0FDA61678CA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3C398BD4-5714-4802-AB86-D43ADD15B3C0} = {3C398BD4-5714-4802-AB86-D43ADD15B3C0}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pvrclient_mptv_libLive555", "..\..\xbmc\pvrclients\MediaPortal\lib\live555\LiveMedia555.vcproj", "{3C398BD4-5714-4802-AB86-D43ADD15B3C0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -774,6 +779,14 @@ Global
 		{2C2D2B7F-EC8F-4614-86D9-C0FDA61678CA}.Release (DirectX)|Win32.Build.0 = Release|Win32
 		{2C2D2B7F-EC8F-4614-86D9-C0FDA61678CA}.Release (OpenGL)|Win32.ActiveCfg = Release|Win32
 		{2C2D2B7F-EC8F-4614-86D9-C0FDA61678CA}.Release (OpenGL)|Win32.Build.0 = Release|Win32
+		{3C398BD4-5714-4802-AB86-D43ADD15B3C0}.Debug (DirectX)|Win32.ActiveCfg = Debug|Win32
+		{3C398BD4-5714-4802-AB86-D43ADD15B3C0}.Debug (DirectX)|Win32.Build.0 = Debug|Win32
+		{3C398BD4-5714-4802-AB86-D43ADD15B3C0}.Debug (OpenGL)|Win32.ActiveCfg = Debug|Win32
+		{3C398BD4-5714-4802-AB86-D43ADD15B3C0}.Debug (OpenGL)|Win32.Build.0 = Debug|Win32
+		{3C398BD4-5714-4802-AB86-D43ADD15B3C0}.Release (DirectX)|Win32.ActiveCfg = Release|Win32
+		{3C398BD4-5714-4802-AB86-D43ADD15B3C0}.Release (DirectX)|Win32.Build.0 = Release|Win32
+		{3C398BD4-5714-4802-AB86-D43ADD15B3C0}.Release (OpenGL)|Win32.ActiveCfg = Release|Win32
+		{3C398BD4-5714-4802-AB86-D43ADD15B3C0}.Release (OpenGL)|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
