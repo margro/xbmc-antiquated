@@ -1224,3 +1224,27 @@ config.log
 
 /xbmc/win32/svn_rev.h
 
+
+/xbmc/pvrclients/MediaPortal/project/VS2008Express/Debug
+/xbmc/pvrclients/MediaPortal/project/VS2008Express/Release
+/xbmc/pvrclients/MediaPortal/project/VS2008Express/Debug-tsreader
+/addons/library.xbmc.addon/libXBMC_addon.lib
+/addons/library.xbmc.addon/libXBMC_addon.dll
+/addons/library.xbmc.gui/libXBMC_gui.lib
+/addons/library.xbmc.gui/libXBMC_gui.dll
+/addons/library.xbmc.pvr/libXBMC_pvr.lib
+/addons/library.xbmc.pvr/libXBMC_pvr.dll
+/portable_data
+/addons/pvr.vdr.streamdev/XBMC_VDR_win32.lib
+/lib/addons/library.xbmc.addon/project/VS2008Express/Debug
+/lib/addons/library.xbmc.gui/project/VS2008Express/Debug
+/lib/addons/library.xbmc.pvr/project/VS2008Express/Debug
+/xbmc/pvrclients/tvheadend/project/VS2008Express/Release
+/xbmc/pvrclients/tvheadend/project/VS2008Express/Debug
+/addons/pvr.hts/XBMC_Tvheadend_win32.lib
+/lib/addons/library.xbmc.addon/project/VS2008Express/Release
+/lib/addons/library.xbmc.gui/project/VS2008Express/Release
+/lib/addons/library.xbmc.pvr/project/VS2008Express/Release
+/xbmc/pvrclients/MediaPortal/project/VS2008Express/Release-tsreader
+/xbmc/pvrclients/vdr-streamdev/project/VS2008Express/Release
+/xbmc/pvrclients/vdr-streamdev/project/VS2008Express/Debug
