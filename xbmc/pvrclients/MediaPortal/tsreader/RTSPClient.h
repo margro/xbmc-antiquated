@@ -33,7 +33,7 @@ class CRTSPClient: public TSThread
 public:
   CRTSPClient();
   virtual ~CRTSPClient(void);
-  bool Initialize(CMemoryBuffer& buffer);
+  bool Initialize(CMemoryBuffer* buffer);
   bool OpenStream(char* url);
   bool Play(double fStart,double fDuration);
   void Stop();
@@ -49,7 +49,7 @@ public:
   bool UpdateDuration();
 
 protected:
-  CMemoryBuffer& m_buffer;
+  CMemoryBuffer* m_buffer;
   Medium* createClient(UsageEnvironment& env,int verbosityLevel, char const* applicationName) ;
   char* getSDPDescriptionFromURL(Medium* client, char const* url,
                char const* username, char const* password,
@@ -81,14 +81,11 @@ protected:
   Boolean oneFilePerFrame ;
   
 public:
-  //MG temporary public; moved from protected
   UsageEnvironment* m_env;
   Medium* m_ourClient ;
   char* getOptionsResponse(Medium* client, char const* url,char* username, char* password) ;
   void shutdown();
   bool startPlayingStreams();
-
-  //end MG
 
   //thread
   void StartBufferThread();
