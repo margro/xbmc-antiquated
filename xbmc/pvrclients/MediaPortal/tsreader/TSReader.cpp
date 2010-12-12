@@ -42,7 +42,7 @@ CTsReader::CTsReader()
   m_fileDuration=NULL;
 
 #ifdef LIVE555
-  m_rtspClient.Initialize(m_buffer);
+  m_rtspClient.Initialize(&m_buffer);
 #endif
 
   m_bLiveTv = false;
