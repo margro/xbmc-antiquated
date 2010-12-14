@@ -1,0 +1,4 @@
+v0.0.1.107 (27-11-2010)
+- First release of the ForTheRecord PVR client (Windows only, TSReader)
+- Implemented: Channel retrieval, tuning of live TV and live radio (tsbuffer only, no rtsp), basic EPG
+- Tested ForTheRecord Argus version: v1.5.0.3
