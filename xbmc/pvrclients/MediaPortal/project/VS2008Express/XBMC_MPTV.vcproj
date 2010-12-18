@@ -202,6 +202,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\..\addons\library.xbmc.addon\dlfcn-win32.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\epg.cpp"
 				>
 			</File>
@@ -305,6 +309,10 @@
 			</File>
 			<File
 				RelativePath="..\..\client.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\..\addons\library.xbmc.addon\dlfcn-win32.h"
 				>
 			</File>
 			<File
