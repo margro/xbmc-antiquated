@@ -132,6 +132,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile="shared\libLive555.lib"
+				IgnoreAllDefaultLibraries="true"
 			/>
 			<Tool
 				Name="VCALinkTool"
