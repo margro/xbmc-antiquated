@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\windows\libXBMC_addon;..\..\windows\libXBMC_pvr;..\..\..\..\addons\include;.;..\..\..\..\cores\dvdplayer\DVDDemuxers;..\..\;..\..\tsreader;..\..\lib\live555\liveMedia\include;..\..\lib\live555\BasicUsageEnvironment\include;..\..\lib\live555\UsageEnvironment\include;..\..\lib\live555\groupsock\include"
+				AdditionalIncludeDirectories="..\..\..\..\..\addons\library.xbmc.addon;..\..\..\..\..\addons\library.xbmc.pvr;..\..\..\..\addons\include;.;..\..\..\..\cores\dvdplayer\DVDDemuxers;..\..\;..\..\tsreader;..\..\lib\live555\liveMedia\include;..\..\lib\live555\BasicUsageEnvironment\include;..\..\lib\live555\UsageEnvironment\include;..\..\lib\live555\groupsock\include"
 				PreprocessorDefinitions="_WIN32;_DEBUG;_WINDOWS;MPTV_EXPORTS;_WIN32PC;_WINSOCKAPI_;_USE_32BIT_TIME_T;TSREADER;LIVE555"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -127,7 +127,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\windows\libXBMC_addon;..\..\windows\libXBMC_pvr;..\..\..\..\addons\include;.;..\..\..\..\cores\dvdplayer\DVDDemuxers;..\..\;..\..\tsreader;..\..\lib\live555\liveMedia\include;..\..\lib\live555\BasicUsageEnvironment\include;..\..\lib\live555\UsageEnvironment\include;..\..\lib\live555\groupsock\include"
+				AdditionalIncludeDirectories="..\..\..\..\..\addons\library.xbmc.addon;..\..\..\..\..\addons\library.xbmc.pvr;..\..\..\..\addons\include;.;..\..\..\..\cores\dvdplayer\DVDDemuxers;..\..\;..\..\tsreader;..\..\lib\live555\liveMedia\include;..\..\lib\live555\BasicUsageEnvironment\include;..\..\lib\live555\UsageEnvironment\include;..\..\lib\live555\groupsock\include"
 				PreprocessorDefinitions="_WIN32;_WINDOWS;MPTV_EXPORTS;_WIN32PC;_WINSOCKAPI_;_USE_32BIT_TIME_T;TSREADER;LIVE555"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="0"
@@ -202,6 +202,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\..\addons\library.xbmc.addon\dlfcn-win32.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\epg.cpp"
 				>
 			</File>
@@ -225,22 +229,6 @@
 				RelativePath="..\..\utils.cpp"
 				>
 			</File>
-			<Filter
-				Name="libXBMC_addon"
-				>
-				<File
-					RelativePath="..\..\windows\libXBMC_addon\libXBMC_addon.cpp"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="libXBMC_pvr"
-				>
-				<File
-					RelativePath="..\..\windows\libXBMC_pvr\libXBMC_pvr.cpp"
-					>
-				</File>
-			</Filter>
 			<Filter
 				Name="tsreader"
 				>
@@ -339,26 +327,6 @@
 				RelativePath="..\..\utils.h"
 				>
 			</File>
-			<Filter
-				Name="libXBMC_addon"
-				>
-				<File
-					RelativePath="..\..\windows\libXBMC_addon\AddonHelpers_local.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\windows\libXBMC_addon\libXBMC_addon.h"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="libXBMC_pvr"
-				>
-				<File
-					RelativePath="..\..\windows\libXBMC_pvr\libXBMC_pvr.h"
-					>
-				</File>
-			</Filter>
 			<Filter
 				Name="tsreader"
 				>

@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\windows\libXBMC_addon;..\..\windows\libXBMC_pvr;..\..\..\..\addons\include;.;..\..\..\..\cores\dvdplayer\DVDDemuxers"
+				AdditionalIncludeDirectories="..\..\..\..\..\addons\library.xbmc.addon;..\..\..\..\..\addons\library.xbmc.pvr;..\..\..\..\addons\include;."
 				PreprocessorDefinitions="_WIN32;_DEBUG;_WINDOWS;MPTV_EXPORTS;_WIN32PC;_WINSOCKAPI_;_USE_32BIT_TIME_T"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -127,7 +127,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\windows\libXBMC_addon;..\..\windows\libXBMC_pvr;..\..\..\..\addons\include;.;..\..\..\..\cores\dvdplayer\DVDDemuxers"
+				AdditionalIncludeDirectories="..\..\..\..\..\addons\library.xbmc.addon;..\..\..\..\..\addons\library.xbmc.pvr;..\..\..\..\addons\include;."
 				PreprocessorDefinitions="_WIN32;_WINDOWS;MPTV_EXPORTS;_WIN32PC;_WINSOCKAPI_;_USE_32BIT_TIME_T"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="0"
@@ -229,74 +229,6 @@
 				RelativePath="..\..\utils.cpp"
 				>
 			</File>
-			<Filter
-				Name="windows"
-				>
-				<Filter
-					Name="libXBMC_addon"
-					>
-					<File
-						RelativePath="..\..\windows\libXBMC_addon\libXBMC_addon.cpp"
-						>
-					</File>
-				</Filter>
-				<Filter
-					Name="libXBMC_pvr"
-					>
-					<File
-						RelativePath="..\..\windows\libXBMC_pvr\libXBMC_pvr.cpp"
-						>
-					</File>
-				</Filter>
-			</Filter>
-			<Filter
-				Name="tsreader"
-				>
-				<File
-					RelativePath="..\..\tsreader\AutoLock.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\CritSec.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\FileReader.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\MemoryBuffer.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\MemoryReader.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\MemorySink.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\MultiFileReader.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\RTSPClient.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\TSReader.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\TSThread.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\WaitEvent.cpp"
-					>
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -320,11 +252,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\os-dependent.h"
+				RelativePath="..\..\pvrclient-mediaportal.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\pvrclient-mediaportal.h"
+				RelativePath="..\..\windows\os_windows.h"
 				>
 			</File>
 			<File
@@ -350,78 +282,6 @@
 			<Filter
 				Name="windows"
 				>
-				<File
-					RelativePath="..\..\windows\pvrclient-mediaportal_os_windows.h"
-					>
-				</File>
-				<Filter
-					Name="libXBMC_addon"
-					>
-					<File
-						RelativePath="..\..\windows\libXBMC_addon\AddonHelpers_local.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\windows\libXBMC_addon\libXBMC_addon.h"
-						>
-					</File>
-				</Filter>
-				<Filter
-					Name="libXBMC_pvr"
-					>
-					<File
-						RelativePath="..\..\windows\libXBMC_pvr\libXBMC_pvr.h"
-						>
-					</File>
-				</Filter>
-			</Filter>
-			<Filter
-				Name="tsreader"
-				>
-				<File
-					RelativePath="..\..\tsreader\AutoLock.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\CritSec.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\FileReader.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\MemoryBuffer.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\MemoryReader.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\MemorySink.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\MultiFileReader.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\RTSPClient.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\TSReader.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\TSThread.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tsreader\WaitEvent.h"
-					>
-				</File>
 			</Filter>
 		</Filter>
 		<File
