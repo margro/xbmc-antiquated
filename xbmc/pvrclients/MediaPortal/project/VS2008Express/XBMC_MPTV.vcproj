@@ -202,6 +202,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\..\addons\library.xbmc.addon\dlfcn-win32.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\epg.cpp"
 				>
 			</File>
@@ -244,11 +248,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\pvrclient-mediaportal.h"
+				RelativePath="..\..\windows\os_windows.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\windows\os_windows.h"
+				RelativePath="..\..\pvrclient-mediaportal.h"
 				>
 			</File>
 			<File
