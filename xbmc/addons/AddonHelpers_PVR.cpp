@@ -21,13 +21,11 @@
 
 #include "Application.h"
 #include "AddonHelpers_PVR.h"
-#include "PVREpg.h"
-#include "PVRChannels.h"
-#include "PVRTimers.h"
-#include "PVRRecordings.h"
-#include "PVRClient.h"
 #include "log.h"
-#include "PVRManager.h"
+
+#include "pvr/PVREpg.h"
+#include "pvr/PVRManager.h"
+#include "addons/PVRClient.h"
 
 namespace ADDON
 {
@@ -64,15 +62,12 @@ void CAddonHelpers_PVR::PVRTransferEpgEntry(void *addonData, const PVRHANDLE han
     return;
   }
 
-  cPVREpg *xbmcEpg        = (cPVREpg*) handle->DATA_ADDRESS;
+  CPVREpg *xbmcEpg        = (CPVREpg*) handle->DATA_ADDRESS;
   PVR_PROGINFO *epgentry2 = (PVR_PROGINFO*) epgentry;
   CPVRClient* client      = (CPVRClient*) handle->CALLER_ADDRESS;
   epgentry2->starttime   += client->GetTimeCorrection();
   epgentry2->endtime     += client->GetTimeCorrection();
-  if (handle->DATA_IDENTIFIER == 1)
-    cPVREpg::AddDB(epgentry2, xbmcEpg);
-  else
-    cPVREpg::Add(epgentry2, xbmcEpg);
+  xbmcEpg->UpdateEntry(epgentry2, handle->DATA_IDENTIFIER == 1);
 
   return;
 }
@@ -87,24 +82,24 @@ void CAddonHelpers_PVR::PVRTransferChannelEntry(void *addonData, const PVRHANDLE
   }
 
   CPVRClient* client         = (CPVRClient*) handle->CALLER_ADDRESS;
-  cPVRChannels *xbmcChannels = (cPVRChannels*) handle->DATA_ADDRESS;
-  cPVRChannelInfoTag tag;
+  CPVRChannels *xbmcChannels = (CPVRChannels*) handle->DATA_ADDRESS;
+  CPVRChannel *tag           = new CPVRChannel();
 
-  tag.SetChannelID(-1);
-  tag.SetNumber(-1);
-  tag.SetClientNumber(channel->number);
-  tag.SetGroupID(0);
-  tag.SetClientID(client->GetClientID());
-  tag.SetUniqueID(channel->uid);
-  tag.SetName(channel->name);
-  tag.SetClientName(channel->callsign);
-  tag.SetIcon(channel->iconpath);
-  tag.SetEncryptionSystem(channel->encryption);
-  tag.SetRadio(channel->radio);
-  tag.SetHidden(channel->hide);
-  tag.SetRecording(channel->recording);
-  tag.SetInputFormat(channel->input_format);
-  tag.SetStreamURL(channel->stream_url);
+  tag->SetChannelID(-1);
+  tag->SetChannelNumber(-1);
+  tag->SetClientChannelNumber(channel->number);
+  tag->SetGroupID(0);
+  tag->SetClientID(client->GetClientID());
+  tag->SetUniqueID(channel->uid);
+  tag->SetChannelName(channel->name);
+  tag->SetClientChannelName(channel->callsign);
+  tag->SetIconPath(channel->iconpath);
+  tag->SetEncryptionSystem(channel->encryption);
+  tag->SetRadio(channel->radio);
+  tag->SetHidden(channel->hide);
+  tag->SetRecording(channel->recording);
+  tag->SetInputFormat(channel->input_format);
+  tag->SetStreamURL(channel->stream_url);
 
   xbmcChannels->push_back(tag);
   return;
@@ -120,9 +115,9 @@ void CAddonHelpers_PVR::PVRTransferRecordingEntry(void *addonData, const PVRHAND
   }
 
   CPVRClient* client = (CPVRClient*) handle->CALLER_ADDRESS;
-  cPVRRecordings *xbmcRecordings = (cPVRRecordings*) handle->DATA_ADDRESS;
+  CPVRRecordings *xbmcRecordings = (CPVRRecordings*) handle->DATA_ADDRESS;
 
-  cPVRRecordingInfoTag tag;
+  CPVRRecordingInfoTag tag;
 
   tag.SetClientIndex(recording->index);
   tag.SetClientID(client->GetClientID());
@@ -150,9 +145,9 @@ void CAddonHelpers_PVR::PVRTransferTimerEntry(void *addonData, const PVRHANDLE h
     return;
   }
 
-  cPVRTimers *xbmcTimers      = (cPVRTimers*) handle->DATA_ADDRESS;
-  CPVRClient* client          = (CPVRClient*) handle->CALLER_ADDRESS;
-  cPVRChannelInfoTag *channel = cPVRChannels::GetByClientFromAll(timer->channelNum, client->GetClientID());
+  CPVRTimers *xbmcTimers = (CPVRTimers*) handle->DATA_ADDRESS;
+  CPVRClient* client     = (CPVRClient*) handle->CALLER_ADDRESS;
+  CPVRChannel *channel   = CPVRChannels::GetByClientFromAll(timer->channelNum, client->GetClientID());
 
   if (channel == NULL)
   {
@@ -160,7 +155,7 @@ void CAddonHelpers_PVR::PVRTransferTimerEntry(void *addonData, const PVRHANDLE h
     return;
   }
 
-  cPVRTimerInfoTag tag;
+  CPVRTimerInfoTag tag;
   tag.SetClientID(client->GetClientID());
   tag.SetClientIndex(timer->index);
   tag.SetActive(timer->active);
@@ -175,56 +170,13 @@ void CAddonHelpers_PVR::PVRTransferTimerEntry(void *addonData, const PVRHANDLE h
   tag.SetRecording(timer->recording);
   tag.SetRepeating(timer->repeat);
   tag.SetWeekdays(timer->repeatflags);
-  tag.SetNumber(channel->Number());
+  tag.SetNumber(channel->ChannelNumber());
   tag.SetRadio(channel->IsRadio());
   CStdString path;
   path.Format("pvr://client%i/timers/%i", tag.ClientID(), tag.ClientIndex());
   tag.SetPath(path);
 
-  CStdString summary;
-  if (!tag.IsRepeating())
-  {
-    summary.Format("%s %s %s %s %s", tag.Start().GetAsLocalizedDate()
-                   , g_localizeStrings.Get(19159)
-                   , tag.Start().GetAsLocalizedTime("", false)
-                   , g_localizeStrings.Get(19160)
-                   , tag.Stop().GetAsLocalizedTime("", false));
-  }
-  else if (tag.FirstDay() != NULL)
-  {
-    summary.Format("%s-%s-%s-%s-%s-%s-%s %s %s %s %s %s %s"
-                   , timer->repeatflags & 0x01 ? g_localizeStrings.Get(19149) : "__"
-                   , timer->repeatflags & 0x02 ? g_localizeStrings.Get(19150) : "__"
-                   , timer->repeatflags & 0x04 ? g_localizeStrings.Get(19151) : "__"
-                   , timer->repeatflags & 0x08 ? g_localizeStrings.Get(19152) : "__"
-                   , timer->repeatflags & 0x10 ? g_localizeStrings.Get(19153) : "__"
-                   , timer->repeatflags & 0x20 ? g_localizeStrings.Get(19154) : "__"
-                   , timer->repeatflags & 0x40 ? g_localizeStrings.Get(19155) : "__"
-                   , g_localizeStrings.Get(19156)
-                   , tag.FirstDay().GetAsLocalizedDate(false)
-                   , g_localizeStrings.Get(19159)
-                   , tag.Start().GetAsLocalizedTime("", false)
-                   , g_localizeStrings.Get(19160)
-                   , tag.Stop().GetAsLocalizedTime("", false));
-  }
-  else
-  {
-    summary.Format("%s-%s-%s-%s-%s-%s-%s %s %s %s %s"
-                   , timer->repeatflags & 0x01 ? g_localizeStrings.Get(19149) : "__"
-                   , timer->repeatflags & 0x02 ? g_localizeStrings.Get(19150) : "__"
-                   , timer->repeatflags & 0x04 ? g_localizeStrings.Get(19151) : "__"
-                   , timer->repeatflags & 0x08 ? g_localizeStrings.Get(19152) : "__"
-                   , timer->repeatflags & 0x10 ? g_localizeStrings.Get(19153) : "__"
-                   , timer->repeatflags & 0x20 ? g_localizeStrings.Get(19154) : "__"
-                   , timer->repeatflags & 0x40 ? g_localizeStrings.Get(19155) : "__"
-                   , g_localizeStrings.Get(19159)
-                   , tag.Start().GetAsLocalizedTime("", false)
-                   , g_localizeStrings.Get(19160)
-                   , tag.Stop().GetAsLocalizedTime("", false));
-  }
-  tag.SetSummary(summary);
-
-  xbmcTimers->push_back(tag);
+  xbmcTimers->Update(tag);
   return;
 }
 

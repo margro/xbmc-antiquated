@@ -24,8 +24,9 @@
 #include "StringUtils.h"
 #include "VideoInfoTag.h"
 #include "MusicInfoTag.h"
-#include "utils/PVREpg.h"
-#include "utils/PVRTimers.h"
+#include "pvr/PVREpg.h"
+#include "pvr/PVREpgInfoTag.h"
+#include "pvr/PVRTimerInfoTag.h"
 #include "FileItem.h"
 #include "URL.h"
 #include "utils/log.h"
@@ -483,9 +484,9 @@ void SSortFileItem::ByChannel(CFileItemPtr &item)
   if (!item) return;
 
   if (item->IsEPG())
-    item->SetSortLabel(item->GetEPGInfoTag()->ChannelName());
+    item->SetSortLabel(item->GetEPGInfoTag()->ChannelTag()->ChannelName());
   else if (item->IsPVRChannel())
-    item->SetSortLabel(item->GetPVRChannelInfoTag()->Name());
+    item->SetSortLabel(item->GetPVRChannelInfoTag()->ChannelName());
 }
 
 void SSortFileItem::ByBitrate(CFileItemPtr &item)

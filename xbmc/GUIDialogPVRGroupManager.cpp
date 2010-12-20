@@ -27,7 +27,9 @@
 #include "GUIDialogYesNo.h"
 #include "GUIWindowManager.h"
 #include "LocalizeStrings.h"
-#include "utils/PVRChannels.h"
+
+#include "pvr/PVRChannelGroups.h"
+#include "pvr/PVRChannels.h"
 
 using namespace std;
 

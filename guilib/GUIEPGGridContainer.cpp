@@ -21,7 +21,6 @@
 
 #include "Key.h"
 #include "GUIEPGGridContainer.h"
-#include "PVRManager.h"
 #include "GUIControlFactory.h"
 #include "GUIListItem.h"
 #include "GUIFontManager.h"
@@ -29,6 +28,8 @@
 #include "utils/TimeUtils.h"
 #include "utils/GUIInfoManager.h"
 #include "LocalizeStrings.h"
+
+#include "pvr/PVREpgInfoTag.h"
 
 #define SHORTGAP     5 // how many blocks is considered a short-gap in nav logic
 #define MINSPERBLOCK 5 /// would be nice to offer zooming of busy schedules /// performance cost to increase resolution 5 fold?
@@ -427,7 +428,7 @@ void CGUIEPGGridContainer::RenderProgrammeItem(float posX, float posY, float wid
       CFileItem *fileItem = item->IsFileItem() ? (CFileItem *)item : NULL;
       if (fileItem)
       {
-        const cPVREPGInfoTag* tag = fileItem->GetEPGInfoTag();
+        const CPVREpgInfoTag* tag = fileItem->GetEPGInfoTag();
         if (m_orientation == VERTICAL)
           layout->SetWidth(width);
         else
@@ -465,7 +466,7 @@ void CGUIEPGGridContainer::RenderProgrammeItem(float posX, float posY, float wid
       CFileItem *fileItem = item->IsFileItem() ? (CFileItem *)item : NULL;
       if (fileItem)
       {
-        const cPVREPGInfoTag* tag = fileItem->GetEPGInfoTag();
+        const CPVREpgInfoTag* tag = fileItem->GetEPGInfoTag();
         if (m_orientation == VERTICAL)
           layout->SetWidth(width);
         else
@@ -628,8 +629,8 @@ bool CGUIEPGGridContainer::OnMessage(CGUIMessage& message)
       itemsPointer.start = 0;
       for (int i = 0; i < items->Size(); ++i)
       {
-        const cPVREPGInfoTag* tag = items->Get(i)->GetEPGInfoTag();
-        int ChannelNow = tag->ChannelNumber();
+        const CPVREpgInfoTag* tag = items->Get(i)->GetEPGInfoTag();
+        int ChannelNow = tag->ChannelTag()->ChannelNumber();
         if (ChannelNow != ChannelLast)
         {
           if (i > 0)
@@ -721,10 +722,10 @@ void CGUIEPGGridContainer::UpdateItems()
 
   for (unsigned int row = 0; row < m_channelItems.size(); ++row)
   {
-    CDateTime gridCursor = m_gridStart; //reset cursor for new channel
-    unsigned long progIdx   = m_epgItemsPtr[row].start;
-    unsigned long lastIdx   = m_epgItemsPtr[row].stop;
-    unsigned int channelnum = ((CFileItem *)m_programmeItems[progIdx].get())->GetEPGInfoTag()->ChannelNumber();
+    CDateTime gridCursor  = m_gridStart; //reset cursor for new channel
+    unsigned long progIdx = m_epgItemsPtr[row].start;
+    unsigned long lastIdx = m_epgItemsPtr[row].stop;
+    int channelnum        = ((CFileItem *)m_programmeItems[progIdx].get())->GetEPGInfoTag()->ChannelTag()->ChannelNumber();
 
     /** FOR EACH BLOCK **********************************************************************/
 
@@ -733,10 +734,10 @@ void CGUIEPGGridContainer::UpdateItems()
       while (progIdx <= lastIdx)
       {
         CGUIListItemPtr item = m_programmeItems[progIdx];
-        if (((CFileItem *)item.get())->GetEPGInfoTag()->ChannelNumber() != channelnum)
+        if (((CFileItem *)item.get())->GetEPGInfoTag()->ChannelTag()->ChannelNumber() != channelnum)
           break;
 
-        const cPVREPGInfoTag* tag = ((CFileItem *)item.get())->GetEPGInfoTag();
+        const CPVREpgInfoTag* tag = ((CFileItem *)item.get())->GetEPGInfoTag();
         if (tag == NULL)
           progIdx++;
 
@@ -772,7 +773,7 @@ void CGUIEPGGridContainer::UpdateItems()
       {
         if (!m_gridIndex[row][block].item)
         {
-          cPVREPGInfoTag broadcast(NULL);
+          CPVREpgInfoTag broadcast(NULL);
           CFileItemPtr unknown(new CFileItem(broadcast));
           for (int i = block ; i > block - itemSize; i--)
           {

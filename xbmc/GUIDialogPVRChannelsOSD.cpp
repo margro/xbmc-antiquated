@@ -25,8 +25,11 @@
 #include "GUIWindowManager.h"
 #include "GUIDialogOK.h"
 #include "GUIDialogPVRGuideInfo.h"
-#include "PVRManager.h"
 #include "ViewState.h"
+
+#include "pvr/PVRManager.h"
+#include "pvr/PVREpg.h"
+#include "pvr/PVRTimerInfoTag.h"
 
 using namespace std;
 
@@ -156,7 +159,9 @@ void CGUIDialogPVRChannelsOSD::ShowInfo(int item)
   if (pItem && pItem->IsPVRChannel())
   {
     /* Get the current running show on this channel from the EPG storage */
-    const cPVREPGInfoTag *epgnow = PVREpgs.GetEPG(pItem->GetPVRChannelInfoTag(), true)->GetInfoTagNow();
+    const CPVREpgInfoTag *epgnow = pItem->GetPVRChannelInfoTag()->GetEPGNow();
+    if (!epgnow)
+      return;
     CFileItem *itemNow  = new CFileItem(*epgnow);
 
     /* Load programme info dialog */

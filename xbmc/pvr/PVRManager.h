@@ -26,12 +26,13 @@
 #include "addons/PVRClient.h"
 #include "addons/AddonManager.h"
 #include "utils/Thread.h"
-#include "utils/PVRChannels.h"
-#include "utils/PVRRecordings.h"
-#include "utils/PVRTimers.h"
 
 #include <vector>
 #include <deque>
+
+class CPVRChannels;
+class CPVRRecordings;
+class CPVRTimers;
 
 typedef std::map< long, boost::shared_ptr<CPVRClient> >           CLIENTMAP;
 typedef std::map< long, boost::shared_ptr<CPVRClient> >::iterator CLIENTMAPITR;
@@ -65,7 +66,7 @@ public:
 
   /*! \name GUIInfoManager functions
    */
-  void SyncInfo();
+  void UpdateRecordingsCache();
   const char* TranslateCharInfo(DWORD dwInfo);
   int TranslateIntInfo(DWORD dwInfo);
   bool TranslateBoolInfo(DWORD dwInfo);
@@ -146,6 +147,8 @@ public:
    */
   bool GetCurrentChannel(int *number, bool *radio);
 
+  bool GetCurrentChannel(const CPVRChannel *channel);
+
    /*! \brief Returns if a minimum one client is active
    \return true if minimum one client is started
    */
@@ -171,7 +174,7 @@ public:
    channel.
    \return true if a recording can be started
    */
-  bool CanInstantRecording();
+  bool CanRecordInstantly();
 
   /*! \brief Get the presence of timers.
    \return true if timers are present
@@ -221,12 +224,12 @@ public:
   /*! \brief Open the Channel stream on the given channel info tag
    \return true if opening was succesfull
    */
-  bool OpenLiveStream(const cPVRChannelInfoTag* tag);
+  bool OpenLiveStream(const CPVRChannel* tag);
 
   /*! \brief Open a recording by a index number passed to this function.
    \return true if opening was succesfull
    */
-  bool OpenRecordedStream(const cPVRRecordingInfoTag* tag);
+  bool OpenRecordedStream(const CPVRRecordingInfoTag* tag);
 
   /*! \brief Returns runtime generated stream URL
    Returns a during runtime generated stream URL from the PVR Client.
@@ -234,7 +237,7 @@ public:
    during opening.
    \return Stream URL
    */
-  CStdString GetLiveStreamURL(const cPVRChannelInfoTag* tag);
+  CStdString GetLiveStreamURL(const CPVRChannel* tag);
 
   /*! \brief Close the stream on the PVR Client.
    */
@@ -346,6 +349,7 @@ private:
   void LoadCurrentChannelSettings();            /*! \brief Read and set the Video and Audio settings of
                                                  playing channel from the TV Database */
   void ResetQualityData();                      /*! \brief Reset the Signal Quality data structure to initial values */
+  bool ContinueLastChannel();
 
   /*--- General PVRManager data ---*/
   CLIENTMAP           m_clients;                /* pointer to each enabled client's interface */
@@ -362,12 +366,8 @@ private:
   DWORD               m_recordingToggleStart;   /* Time to toogle currently running pvr recordings */
   unsigned int        m_recordingToggleCurrent; /* The current item showed by the GUIInfoManager */
 
-  CStdString          m_nextRecordingDateTime;
-  CStdString          m_nextRecordingChannel;
-  CStdString          m_nextRecordingTitle;
-  std::vector<CStdString> m_nowRecordingDateTime;
-  std::vector<CStdString> m_nowRecordingChannel;
-  std::vector<CStdString> m_nowRecordingTitle;
+  std::vector<CPVRTimerInfoTag *> m_NowRecording;
+  CPVRTimerInfoTag *  m_NextRecording;
   CStdString          m_backendName;
   CStdString          m_backendVersion;
   CStdString          m_backendHost;
@@ -396,7 +396,7 @@ private:
   int                 m_PreviousChannel[2];
   int                 m_PreviousChannelIndex;
   int                 m_LastChannel;
-  long                m_LastChannelChanged;
+  unsigned int        m_LastChannelChanged;
 
   /*--- Stream playback data ---*/
   CFileItem          *m_currentPlayingChannel;    /* The current playing channel or NULL */

@@ -19,7 +19,7 @@
  *
  */
 
-/* Standart includes */
+/* Standard includes */
 #include "Application.h"
 #include "FileSystem/File.h"
 #include "FileSystem/StackDirectory.h"
@@ -52,8 +52,11 @@
 #include "GUIWindowTV.h"
 
 /* TV control */
-#include "PVRManager.h"
-
+#include "pvr/PVRManager.h"
+#include "pvr/PVREpgInfoTag.h"
+#include "pvr/PVRChannelGroups.h"
+#include "pvr/PVRChannelGroup.h"
+#include "pvr/PVRTimerInfoTag.h"
 
 using namespace std;
 
@@ -280,7 +283,7 @@ bool CGUIWindowTV::OnMessage(CGUIMessage& message)
       }
       else if (iAction == ACTION_RECORD)
       {
-        if (pItem->GetEPGInfoTag()->ChannelNumber() != -1)
+        if (pItem->GetEPGInfoTag()->ChannelTag()->ChannelNumber() != -1)
         {
           if (pItem->GetEPGInfoTag()->Timer() == NULL)
           {
@@ -298,11 +301,11 @@ bool CGUIWindowTV::OnMessage(CGUIMessage& message)
             if (!pDialog->IsConfirmed())
               return true;
 
-            cPVRTimerInfoTag newtimer(*pItem.get());
-            CFileItem *item = new CFileItem(newtimer);
+            CPVRTimerInfoTag *newtimer = CPVRTimerInfoTag::CreateFromEpg(*pItem->GetEPGInfoTag());
+            CFileItem *item = new CFileItem(*newtimer);
 
-            if (cPVRTimers::AddTimer(*item))
-              PVREpgs.SetVariableData(m_vecItems);
+            if (CPVRTimers::AddTimer(*item))
+              PVRTimers.Update();
           }
           else
           {
@@ -312,13 +315,13 @@ bool CGUIWindowTV::OnMessage(CGUIMessage& message)
       }
       else if (iAction == ACTION_PLAY)
       {
-        cPVRChannels *channels;
-        if (!pItem->GetEPGInfoTag()->IsRadio())
+        CPVRChannels *channels;
+        if (!pItem->GetEPGInfoTag()->ChannelTag()->IsRadio())
           channels = &PVRChannelsTV;
         else
           channels = &PVRChannelsRadio;
 
-        if (!g_application.PlayFile(CFileItem(channels->at(pItem->GetEPGInfoTag()->ChannelNumber()-1))))
+        if (!g_application.PlayFile(CFileItem(*channels->at(pItem->GetEPGInfoTag()->ChannelTag()->ChannelNumber()-1))))
         {
           CGUIDialogOK::ShowAndGetInput(19033,0,19035,0);
           return false;
@@ -375,7 +378,7 @@ bool CGUIWindowTV::OnMessage(CGUIMessage& message)
       else if (iAction == ACTION_DELETE_ITEM)
       {
         /* Check if entry is a valid deleteable channel */
-        int iChannel = pItem->GetPVRChannelInfoTag()->Number();
+        int iChannel = pItem->GetPVRChannelInfoTag()->ChannelNumber();
 
         if (iChannel != -1)
         {
@@ -385,7 +388,7 @@ bool CGUIWindowTV::OnMessage(CGUIMessage& message)
           {
             pDialog->SetHeading(19039);
             pDialog->SetLine(0, "");
-            pDialog->SetLine(1, pItem->GetPVRChannelInfoTag()->Name());
+            pDialog->SetLine(1, pItem->GetPVRChannelInfoTag()->ChannelName());
             pDialog->SetLine(2, "");
             pDialog->DoModal();
 
@@ -393,12 +396,12 @@ bool CGUIWindowTV::OnMessage(CGUIMessage& message)
 
             if (m_iCurrSubTVWindow == TV_WINDOW_CHANNELS_TV)
             {
-              PVRChannelsTV.HideChannel(pItem->GetPVRChannelInfoTag()->Number());
+              PVRChannelsTV.HideChannel(pItem->GetPVRChannelInfoTag(), true);
               UpdateChannelsTV();
             }
             else if (m_iCurrSubTVWindow == TV_WINDOW_CHANNELS_RADIO)
             {
-              PVRChannelsRadio.HideChannel(pItem->GetPVRChannelInfoTag()->Number());
+              PVRChannelsRadio.HideChannel(pItem->GetPVRChannelInfoTag(), true);
               UpdateChannelsRadio();
             }
           }
@@ -457,7 +460,7 @@ bool CGUIWindowTV::OnMessage(CGUIMessage& message)
 
           if (pDialog->IsConfirmed())
           {
-            if (cPVRRecordings::DeleteRecording(*pItem))
+            if (CPVRRecordings::DeleteRecording(*pItem))
             {
               PVRRecordings.Update(true);
               UpdateRecordings();
@@ -488,13 +491,19 @@ bool CGUIWindowTV::OnMessage(CGUIMessage& message)
            open settings for selected timer entry */
         if (pItem->m_strPath == "pvr://timers/add.timer")
         {
-          cPVRTimerInfoTag newtimer(true);
-          CFileItem *item = new CFileItem(newtimer);
+          CPVRTimerInfoTag *newtimer = CPVRTimerInfoTag::InstantTimer();
+          if (!newtimer)
+          {
+            CLog::Log(LOGWARNING,"%s - could not create instant timer",
+                __FUNCTION__);
+            return false;
+          }
+          CFileItem *item = new CFileItem(*newtimer);
 
           if (ShowTimerSettings(item))
           {
             /* Add timer to backend */
-            cPVRTimers::AddTimer(*item);
+            CPVRTimers::AddTimer(*item);
             UpdateTimers();
           }
         }
@@ -505,7 +514,7 @@ bool CGUIWindowTV::OnMessage(CGUIMessage& message)
           if (ShowTimerSettings(&fileitem))
           {
             /* Update timer on pvr backend */
-            cPVRTimers::UpdateTimer(fileitem);
+            CPVRTimers::UpdateTimer(fileitem);
             UpdateTimers();
           }
         }
@@ -536,7 +545,7 @@ bool CGUIWindowTV::OnMessage(CGUIMessage& message)
 
           if (pDialog->IsConfirmed())
           {
-            cPVRTimers::DeleteTimer(*pItem);
+            CPVRTimers::DeleteTimer(*pItem);
             UpdateTimers();
           }
           return true;
@@ -574,7 +583,7 @@ bool CGUIWindowTV::OnMessage(CGUIMessage& message)
       }
       else if (iAction == ACTION_RECORD)
       {
-        if (pItem->GetEPGInfoTag()->ChannelNumber() != -1)
+        if (pItem->GetEPGInfoTag()->ChannelTag()->ChannelNumber() != -1)
         {
           if (pItem->GetEPGInfoTag()->Timer() == NULL)
           {
@@ -583,20 +592,23 @@ bool CGUIWindowTV::OnMessage(CGUIMessage& message)
             if (!pDialog)
               return false;
 
+            CPVREpgInfoTag *epgTag = pItem->GetEPGInfoTag();
+
             pDialog->SetHeading(264);
             pDialog->SetLine(0, "");
-            pDialog->SetLine(1, pItem->GetEPGInfoTag()->Title());
+            pDialog->SetLine(1, epgTag->Title());
             pDialog->SetLine(2, "");
             pDialog->DoModal();
 
             if (!pDialog->IsConfirmed())
               return true;
 
-            cPVRTimerInfoTag newtimer(*pItem.get());
-            CFileItem *item = new CFileItem(newtimer);
 
-            if (cPVRTimers::AddTimer(*item))
-              PVREpgs.SetVariableData(m_vecItems);
+            CPVRTimerInfoTag *newtimer = CPVRTimerInfoTag::CreateFromEpg(*epgTag);
+            CFileItem *item = new CFileItem(*newtimer);
+
+            if (CPVRTimers::AddTimer(*item))
+              PVRTimers.Update();
           }
           else
             CGUIDialogOK::ShowAndGetInput(19033,19034,0,0);
@@ -687,7 +699,7 @@ void CGUIWindowTV::OnInitWindow()
   if (!m_bSearchStarted)
   {
     m_bSearchStarted = true;
-    m_searchfilter.SetDefaults();
+    m_searchfilter.Reset();
   }
 
   if (m_iSavedSubTVWindow == TV_WINDOW_TV_PROGRAM)
@@ -834,7 +846,7 @@ void CGUIWindowTV::GetContextButtons(int itemNumber, CContextButtons &buttons)
       buttons.Add(CONTEXT_BUTTON_BEGIN, 19063);          /* Go to begin */
       buttons.Add(CONTEXT_BUTTON_END, 19064);            /* Go to end */
     }
-    if (g_PVRManager.HaveMenuHooks(pItem->GetEPGInfoTag()->ClientID()))
+    if (g_PVRManager.HaveMenuHooks(pItem->GetEPGInfoTag()->ChannelTag()->ClientID()))
       buttons.Add(CONTEXT_BUTTON_MENU_HOOKS, 19195);        /* PVR client specific action */
   }
   else if (m_iCurrSubTVWindow == TV_WINDOW_SEARCH)
@@ -864,7 +876,7 @@ void CGUIWindowTV::GetContextButtons(int itemNumber, CContextButtons &buttons)
       buttons.Add(CONTEXT_BUTTON_SORTBY_NAME, 103);       /* Sort by Name */
       buttons.Add(CONTEXT_BUTTON_SORTBY_DATE, 104);       /* Sort by Date */
       buttons.Add(CONTEXT_BUTTON_CLEAR, 20375);           /* Clear search results */
-      if (g_PVRManager.HaveMenuHooks(pItem->GetEPGInfoTag()->ClientID()))
+      if (g_PVRManager.HaveMenuHooks(pItem->GetEPGInfoTag()->ChannelTag()->ClientID()))
         buttons.Add(CONTEXT_BUTTON_MENU_HOOKS, 19195);        /* PVR client specific action */
     }
   }
@@ -896,13 +908,13 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
     }
     else if (m_iCurrSubTVWindow == TV_WINDOW_TV_PROGRAM)
     {
-      cPVRChannels *channels;
-      if (!pItem->GetEPGInfoTag()->IsRadio())
+      CPVRChannels *channels;
+      if (!pItem->GetEPGInfoTag()->ChannelTag()->IsRadio())
         channels = &PVRChannelsTV;
       else
         channels = &PVRChannelsRadio;
 
-      if (!g_application.PlayFile(CFileItem(channels->at(pItem->GetEPGInfoTag()->ChannelNumber()-1))))
+      if (!g_application.PlayFile(CFileItem(*channels->at(pItem->GetEPGInfoTag()->ChannelTag()->ChannelNumber()-1))))
       {
         CGUIDialogOK::ShowAndGetInput(19033,0,19035,0);
         return false;
@@ -913,20 +925,20 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
   else if (button == CONTEXT_BUTTON_MOVE)
   {
     CStdString strIndex;
-    strIndex.Format("%i", pItem->GetPVRChannelInfoTag()->Number());
+    strIndex.Format("%i", pItem->GetPVRChannelInfoTag()->ChannelNumber());
     CGUIDialogNumeric::ShowAndGetNumber(strIndex, g_localizeStrings.Get(19052));
     int newIndex = atoi(strIndex.c_str());
 
-    if (newIndex != pItem->GetPVRChannelInfoTag()->Number())
+    if (newIndex != pItem->GetPVRChannelInfoTag()->ChannelNumber())
     {
       if (m_iCurrSubTVWindow == TV_WINDOW_CHANNELS_TV)
       {
-        PVRChannelsTV.MoveChannel(pItem->GetPVRChannelInfoTag()->Number(), newIndex);
+        PVRChannelsTV.MoveChannel(pItem->GetPVRChannelInfoTag()->ChannelNumber(), newIndex);
         UpdateChannelsTV();
       }
       else if (m_iCurrSubTVWindow == TV_WINDOW_CHANNELS_RADIO)
       {
-        PVRChannelsRadio.MoveChannel(pItem->GetPVRChannelInfoTag()->Number(), newIndex);
+        PVRChannelsRadio.MoveChannel(pItem->GetPVRChannelInfoTag()->ChannelNumber(), newIndex);
         UpdateChannelsRadio();
       }
     }
@@ -940,7 +952,7 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
     {
       pDialog->SetHeading(19039);
       pDialog->SetLine(0, "");
-      pDialog->SetLine(1, pItem->GetPVRChannelInfoTag()->Name());
+      pDialog->SetLine(1, pItem->GetPVRChannelInfoTag()->ChannelName());
       pDialog->SetLine(2, "");
       pDialog->DoModal();
 
@@ -948,12 +960,12 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 
       if (m_iCurrSubTVWindow == TV_WINDOW_CHANNELS_TV)
       {
-        PVRChannelsTV.HideChannel(pItem->GetPVRChannelInfoTag()->Number());
+        PVRChannelsTV.HideChannel(pItem->GetPVRChannelInfoTag());
         UpdateChannelsTV();
       }
       else if (m_iCurrSubTVWindow == TV_WINDOW_CHANNELS_RADIO)
       {
-        PVRChannelsRadio.HideChannel(pItem->GetPVRChannelInfoTag()->Number());
+        PVRChannelsRadio.HideChannel(pItem->GetPVRChannelInfoTag());
         UpdateChannelsRadio();
       }
     }
@@ -981,10 +993,10 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
     CFileItemList items;
 
     // add the current thumb, if available
-    if (!pItem->GetPVRChannelInfoTag()->Icon().IsEmpty())
+    if (!pItem->GetPVRChannelInfoTag()->IconPath().IsEmpty())
     {
       CFileItemPtr current(new CFileItem("thumb://Current", false));
-      current->SetThumbnailImage(pItem->GetPVRChannelInfoTag()->Icon());
+      current->SetThumbnailImage(pItem->GetPVRChannelInfoTag()->IconPath());
       current->SetLabel(g_localizeStrings.Get(20016));
       items.Add(current);
     }
@@ -1023,12 +1035,12 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 
     if (m_iCurrSubTVWindow == TV_WINDOW_CHANNELS_TV)
     {
-      PVRChannelsTV.SetChannelIcon(pItem->GetPVRChannelInfoTag()->Number(), strThumb);
+      pItem->GetPVRChannelInfoTag()->SetIconPath(strThumb, true);
       UpdateChannelsTV();
     }
     else if (m_iCurrSubTVWindow == TV_WINDOW_CHANNELS_RADIO)
     {
-      PVRChannelsRadio.SetChannelIcon(pItem->GetPVRChannelInfoTag()->Number(), strThumb);
+      pItem->GetPVRChannelInfoTag()->SetIconPath(strThumb, true);
       UpdateChannelsRadio();
     }
 
@@ -1042,7 +1054,7 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 
       if (ShowTimerSettings(&fileitem))
       {
-        cPVRTimers::UpdateTimer(fileitem);
+        CPVRTimers::UpdateTimer(fileitem);
         UpdateTimers();
       }
     }
@@ -1058,12 +1070,12 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
     }
     else if (m_iCurrSubTVWindow == TV_WINDOW_TIMERS)
     {
-      cPVRTimerInfoTag newtimer(true);
-      CFileItem *item = new CFileItem(newtimer);
+      CPVRTimerInfoTag *newtimer = CPVRTimerInfoTag::InstantTimer();
+      CFileItem *item = new CFileItem(*newtimer);
 
       if (ShowTimerSettings(item))
       {
-        cPVRTimers::AddTimer(*item);
+        CPVRTimers::AddTimer(*item);
         UpdateTimers();
       }
 
@@ -1087,7 +1099,7 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 
     CGUIDialogOK::ShowAndGetInput(19033, 19040, 0, return_str_id);
 
-    cPVRTimers::UpdateTimer(*pItem);
+    CPVRTimers::UpdateTimer(*pItem);
     UpdateTimers(); /** Force list update **/
     return true;
   }
@@ -1098,7 +1110,7 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
       CStdString strNewName = pItem->GetPVRTimerInfoTag()->Title();
       if (CGUIDialogKeyboard::ShowAndGetInput(strNewName, g_localizeStrings.Get(19042), false))
       {
-        cPVRTimers::RenameTimer(*pItem, strNewName);
+        CPVRTimers::RenameTimer(*pItem, strNewName);
         UpdateTimers();
       }
 
@@ -1109,7 +1121,7 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
       CStdString strNewName = pItem->GetPVRRecordingInfoTag()->Title();
       if (CGUIDialogKeyboard::ShowAndGetInput(strNewName, g_localizeStrings.Get(19041), false))
       {
-        if (cPVRRecordings::RenameRecording(*pItem, strNewName))
+        if (CPVRRecordings::RenameRecording(*pItem, strNewName))
         {
           UpdateRecordings();
         }
@@ -1133,7 +1145,7 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 
         if (!pDialog->IsConfirmed()) return false;
 
-        cPVRTimers::DeleteTimer(*pItem);
+        CPVRTimers::DeleteTimer(*pItem);
 
         UpdateTimers();
       }
@@ -1154,7 +1166,7 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 
         if (!pDialog->IsConfirmed()) return false;
 
-        if (cPVRRecordings::DeleteRecording(*pItem))
+        if (CPVRRecordings::DeleteRecording(*pItem))
         {
           PVRRecordings.Update(true);
           UpdateRecordings();
@@ -1182,7 +1194,7 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
   {
     if (m_iCurrSubTVWindow == TV_WINDOW_TV_PROGRAM || m_iCurrSubTVWindow == TV_WINDOW_SEARCH)
     {
-      int iChannel = pItem->GetEPGInfoTag()->ChannelNumber();
+      int iChannel = pItem->GetEPGInfoTag()->ChannelTag()->ChannelNumber();
 
       if (iChannel != -1)
       {
@@ -1194,18 +1206,18 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
           if (pDialog)
           {
             pDialog->SetHeading(264);
-            pDialog->SetLine(0, pItem->GetEPGInfoTag()->ChannelName());
+            pDialog->SetLine(0, pItem->GetEPGInfoTag()->ChannelTag()->ChannelName());
             pDialog->SetLine(1, "");
             pDialog->SetLine(2, pItem->GetEPGInfoTag()->Title());
             pDialog->DoModal();
 
             if (pDialog->IsConfirmed())
             {
-              cPVRTimerInfoTag newtimer(*pItem.get());
-              CFileItem *item = new CFileItem(newtimer);
+              CPVRTimerInfoTag *newtimer = CPVRTimerInfoTag::CreateFromEpg(*pItem->GetEPGInfoTag());
+              CFileItem *item = new CFileItem(*newtimer);
 
-              if (cPVRTimers::AddTimer(*item))
-                PVREpgs.SetVariableData(m_vecItems);
+              if (CPVRTimers::AddTimer(*item))
+                PVRTimers.Update();
             }
           }
         }
@@ -1220,7 +1232,7 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
   {
     if (m_iCurrSubTVWindow == TV_WINDOW_TV_PROGRAM || m_iCurrSubTVWindow == TV_WINDOW_SEARCH)
     {
-      int iChannel = pItem->GetEPGInfoTag()->ChannelNumber();
+      int iChannel = pItem->GetEPGInfoTag()->ChannelTag()->ChannelNumber();
 
       if (iChannel != -1)
       {
@@ -1232,13 +1244,13 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
           {
             for (int i = 0; i < timerlist.Size(); ++i)
             {
-              if ((timerlist[i]->GetPVRTimerInfoTag()->Number() == pItem->GetEPGInfoTag()->ChannelNumber()) &&
+              if ((timerlist[i]->GetPVRTimerInfoTag()->Number() == pItem->GetEPGInfoTag()->ChannelTag()->ChannelNumber()) &&
                   (timerlist[i]->GetPVRTimerInfoTag()->Start() <= pItem->GetEPGInfoTag()->Start()) &&
                   (timerlist[i]->GetPVRTimerInfoTag()->Stop() >= pItem->GetEPGInfoTag()->End()) &&
                   (timerlist[i]->GetPVRTimerInfoTag()->IsRepeating() != true))
               {
-                if (cPVRTimers::DeleteTimer(*timerlist[i]))
-                  PVREpgs.SetVariableData(m_vecItems);
+                if (CPVRTimers::DeleteTimer(*timerlist[i]))
+                  PVRTimers.Update();
               }
             }
           }
@@ -1263,7 +1275,7 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
     {
       m_bSearchStarted = false;
       m_bSearchConfirmed = false;
-      m_searchfilter.SetDefaults();
+      m_searchfilter.Reset();
       UpdateSearch();
     }
   }
@@ -1365,18 +1377,18 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
   }
   else if (button == CONTEXT_BUTTON_FIND)
   {
-    m_searchfilter.SetDefaults();
+    m_searchfilter.Reset();
     if (pItem->IsEPG())
     {
-      m_searchfilter.m_SearchString = "\"" + pItem->GetEPGInfoTag()->Title() + "\"";
+      m_searchfilter.m_strSearchTerm = "\"" + pItem->GetEPGInfoTag()->Title() + "\"";
     }
     else if (pItem->IsPVRChannel())
     {
-      m_searchfilter.m_SearchString = "\"" + pItem->GetPVRChannelInfoTag()->NowTitle() + "\"";
+      m_searchfilter.m_strSearchTerm = "\"" + pItem->GetPVRChannelInfoTag()->GetEPGNow()->Title() + "\"";
     }
     else if (pItem->IsPVRRecording())
     {
-      m_searchfilter.m_SearchString = "\"" + pItem->GetPVRRecordingInfoTag()->Title() + "\"";
+      m_searchfilter.m_strSearchTerm = "\"" + pItem->GetPVRRecordingInfoTag()->Title() + "\"";
     }
     m_bSearchConfirmed = true;
     SET_CONTROL_FOCUS(CONTROL_BTNSEARCH, 0);
@@ -1387,7 +1399,7 @@ bool CGUIWindowTV::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
   {
     if (pItem->IsEPG())
     {
-      g_PVRManager.ProcessMenuHooks(pItem->GetEPGInfoTag()->ClientID());
+      g_PVRManager.ProcessMenuHooks(pItem->GetEPGInfoTag()->ChannelTag()->ClientID());
     }
     else if (pItem->IsPVRChannel())
     {
@@ -1418,14 +1430,14 @@ void CGUIWindowTV::ShowEPGInfo(CFileItem *item)
 
     /* inform dialog about the file item */
     pDlgInfo->SetProgInfo(item);
-    PVREpgs.SetVariableData(m_vecItems);
+//    PVREpgs.SetVariableData(m_vecItems);
 
     /* Open dialog window */
     pDlgInfo->DoModal();
   }
   else if (item->IsPVRChannel())
   {
-    const cPVREPGInfoTag *epgnow = PVREpgs.GetEPG(item->GetPVRChannelInfoTag(), true)->GetInfoTagNow();
+    const CPVREpgInfoTag *epgnow = item->GetPVRChannelInfoTag()->GetEPGNow();
     if (!epgnow)
     {
       CGUIDialogOK::ShowAndGetInput(19033,0,19055,0);
@@ -1539,9 +1551,8 @@ void CGUIWindowTV::ShowSearchResults()
 
 void CGUIWindowTV::UpdateGuide()
 {
-  bool RadioPlaying;
-  int CurrentChannel;
-  g_PVRManager.GetCurrentChannel(&CurrentChannel, &RadioPlaying);
+  CPVRChannel CurrentChannel;
+  g_PVRManager.GetCurrentChannel(&CurrentChannel);
 
   m_vecItems->Clear();
 
@@ -1550,19 +1561,13 @@ void CGUIWindowTV::UpdateGuide()
     m_guideGrid = NULL;
     m_viewControl.SetCurrentView(CONTROL_LIST_GUIDE_CHANNEL);
 
-    CStdString strChannel;
-    if (!RadioPlaying)
-      strChannel = PVRChannelsTV.GetNameForChannel(CurrentChannel);
-    else
-      strChannel = PVRChannelsRadio.GetNameForChannel(CurrentChannel);
-
     SET_CONTROL_LABEL(CONTROL_BTNGUIDE, g_localizeStrings.Get(19029));
-    SET_CONTROL_LABEL(CONTROL_LABELGROUP, strChannel);
+    SET_CONTROL_LABEL(CONTROL_LABELGROUP, CurrentChannel.ChannelName().c_str());
 
-    if (PVREpgs.GetEPGChannel(CurrentChannel, m_vecItems, RadioPlaying) == 0)
+    if (PVREpgs.GetEPGForChannel(&CurrentChannel, m_vecItems) == 0)
     {
       CFileItemPtr item;
-      item.reset(new CFileItem("pvr://guide/" + strChannel + "/empty.epg", false));
+      item.reset(new CFileItem("pvr://guide/" + CurrentChannel.ChannelName() + "/empty.epg", false));
       item->SetLabel(g_localizeStrings.Get(19028));
       item->SetLabelPreformated(true);
       m_vecItems->Add(item);
@@ -1578,7 +1583,7 @@ void CGUIWindowTV::UpdateGuide()
     SET_CONTROL_LABEL(CONTROL_BTNGUIDE, g_localizeStrings.Get(19029) + ": " + g_localizeStrings.Get(19030));
     SET_CONTROL_LABEL(CONTROL_LABELGROUP, g_localizeStrings.Get(19030));
 
-    if (PVREpgs.GetEPGNow(m_vecItems, RadioPlaying) == 0)
+    if (PVREpgs.GetEPGNow(m_vecItems, CurrentChannel.IsRadio()) == 0)
     {
       CFileItemPtr item;
       item.reset(new CFileItem("pvr://guide/now/empty.epg", false));
@@ -1597,7 +1602,7 @@ void CGUIWindowTV::UpdateGuide()
     SET_CONTROL_LABEL(CONTROL_BTNGUIDE, g_localizeStrings.Get(19029) + ": " + g_localizeStrings.Get(19031));
     SET_CONTROL_LABEL(CONTROL_LABELGROUP, g_localizeStrings.Get(19031));
 
-    if (PVREpgs.GetEPGNext(m_vecItems, RadioPlaying) == 0)
+    if (PVREpgs.GetEPGNext(m_vecItems, CurrentChannel.IsRadio()) == 0)
     {
       CFileItemPtr item;
       item.reset(new CFileItem("pvr://guide/next/empty.epg", false));
@@ -1612,7 +1617,7 @@ void CGUIWindowTV::UpdateGuide()
     SET_CONTROL_LABEL(CONTROL_BTNGUIDE, g_localizeStrings.Get(19029) + ": " + g_localizeStrings.Get(19032));
     SET_CONTROL_LABEL(CONTROL_LABELGROUP, g_localizeStrings.Get(19032));
 
-    if (PVREpgs.GetEPGAll(m_vecItems, RadioPlaying) > 0)
+    if (PVREpgs.GetEPGAll(m_vecItems, CurrentChannel.IsRadio()) > 0)
     {
       CDateTime now = CDateTime::GetCurrentDateTime();
       CDateTime m_gridStart = now - CDateTimeSpan(0, 0, 0, (now.GetMinute() % 30) * 60 + now.GetSecond()) - CDateTimeSpan(0, g_guiSettings.GetInt("pvrmenu.lingertime") / 60, g_guiSettings.GetInt("pvrmenu.lingertime") % 60, 0);
@@ -1735,7 +1740,7 @@ void CGUIWindowTV::UpdateSearch()
     if (dlgProgress)
     {
       dlgProgress->SetHeading(194);
-      dlgProgress->SetLine(0, m_searchfilter.m_SearchString);
+      dlgProgress->SetLine(0, m_searchfilter.m_strSearchTerm);
       dlgProgress->SetLine(1, "");
       dlgProgress->SetLine(2, "");
       dlgProgress->StartModal();

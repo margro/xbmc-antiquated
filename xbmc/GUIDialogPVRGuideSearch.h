@@ -22,7 +22,7 @@
 
 #include "GUIDialog.h"
 
-struct EPGSearchFilter;
+struct PVREpgSearchFilter;
 
 class CGUIDialogPVRGuideSearch : public CGUIDialog
 {
@@ -32,7 +32,7 @@ public:
   virtual bool OnMessage(CGUIMessage& message);
   virtual void OnWindowLoaded();
 
-  void SetFilterData(EPGSearchFilter *searchfilter) { m_searchfilter = searchfilter; }
+  void SetFilterData(PVREpgSearchFilter *searchfilter) { m_searchfilter = searchfilter; }
   bool IsConfirmed() const { return m_bConfirmed; }
   bool IsCanceled() const { return m_bCanceled; }
   void OnSearch();
@@ -42,5 +42,5 @@ protected:
 
   bool m_bConfirmed;
   bool m_bCanceled;
-  EPGSearchFilter *m_searchfilter;
+  PVREpgSearchFilter *m_searchfilter;
 };

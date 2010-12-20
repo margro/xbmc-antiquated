@@ -24,6 +24,10 @@
 #include "AdvancedSettings.h"
 #include "utils/log.h"
 
+#include "PVREpgInfoTag.h"
+#include "PVRChannelGroups.h"
+#include "PVRChannelGroup.h"
+
 using namespace std;
 
 using namespace dbiplus;
@@ -31,6 +35,7 @@ using namespace dbiplus;
 CTVDatabase::CTVDatabase(void)
 {
   oneWriteSQLString = "";
+  lastScanTime.SetValid(false);
 }
 
 CTVDatabase::~CTVDatabase(void)
@@ -118,6 +123,9 @@ bool CTVDatabase::UpdateOldVersion(int iVersion)
 
 CDateTime CTVDatabase::GetLastEPGScanTime()
 {
+  if (lastScanTime.IsValid())
+    return lastScanTime;
+
   try
   {
     if (NULL == m_pDB.get()) return -1;
@@ -131,13 +139,15 @@ CDateTime CTVDatabase::GetLastEPGScanTime()
     {
       CDateTime lastTime;
       lastTime.SetFromDBDateTime(m_pDS->fv("ScanTime").get_asString());
+      lastScanTime = lastTime;
       m_pDS->close();
+
       return lastTime;
     }
     else
     {
       m_pDS->close();
-      return NULL;
+      return -1;
     }
   }
   catch (...)
@@ -154,6 +164,9 @@ bool CTVDatabase::UpdateLastEPGScan(const CDateTime lastScan)
   {
     if (NULL == m_pDB.get()) return false;
     if (NULL == m_pDS.get()) return false;
+
+    CLog::Log(LOGDEBUG, "%s - updating last scan time to '%s'", __FUNCTION__, lastScan.GetAsDBDateTime().c_str());
+    lastScanTime = lastScan;
 
     CStdString SQL=FormatSQL("select * from LastEPGScan");
     m_pDS->query(SQL.c_str());
@@ -214,7 +227,7 @@ int CTVDatabase::GetLastChannel()
   return -1;
 }
 
-bool CTVDatabase::UpdateLastChannel(const cPVRChannelInfoTag &info)
+bool CTVDatabase::UpdateLastChannel(const CPVRChannel &info)
 {
   try
   {
@@ -235,7 +248,7 @@ bool CTVDatabase::UpdateLastChannel(const cPVRChannelInfoTag &info)
     {
       m_pDS->close();
       // update the item
-      CStdString SQL=FormatSQL("update LastChannel set Number=%i,Name='%s',idChannel=%i", info.Number(), info.Name().c_str(), info.ChannelID());
+      CStdString SQL=FormatSQL("update LastChannel set Number=%i,Name='%s',idChannel=%i", info.ChannelNumber(), info.ChannelName().c_str(), info.ChannelID());
 
       m_pDS->exec(SQL.c_str());
       return true;
@@ -243,7 +256,7 @@ bool CTVDatabase::UpdateLastChannel(const cPVRChannelInfoTag &info)
     else   // add the items
     {
       m_pDS->close();
-      SQL=FormatSQL("insert into LastChannel ( idChannel,Number,Name ) values ('%i','%i','%s')\n", info.ChannelID(), info.Number(), info.Name().c_str());
+      SQL=FormatSQL("insert into LastChannel ( idChannel,Number,Name ) values ('%i','%i','%s')\n", info.ChannelID(), info.ChannelNumber(), info.ChannelName().c_str());
       m_pDS->exec(SQL.c_str());
       return true;
     }
@@ -353,34 +366,18 @@ bool CTVDatabase::EraseEPG()
   }
 }
 
-bool CTVDatabase::EraseChannelEPG(long channelID)
+bool CTVDatabase::EraseEPGForChannel(long channelID, CDateTime after)
 {
   try
   {
     if (NULL == m_pDB.get()) return false;
     if (NULL == m_pDS.get()) return false;
+    CStdString strSQL;
 
-    CStdString strSQL=FormatSQL("delete from GuideData WHERE GuideData.idChannel = '%u'", channelID);
-
-    m_pDS->exec(strSQL.c_str());
-
-    return true;
-  }
-  catch (...)
-  {
-    CLog::Log(LOGERROR, "%s failed", __FUNCTION__);
-    return false;
-  }
-}
-
-bool CTVDatabase::EraseChannelEPGAfterTime(long channelID, CDateTime after)
-{
-  try
-  {
-    if (NULL == m_pDB.get()) return false;
-    if (NULL == m_pDS.get()) return false;
-
-    CStdString strSQL=FormatSQL("delete from GuideData WHERE GuideData.idChannel = '%u' AND GuideData.EndTime > '%s'", channelID, after.GetAsDBDateTime().c_str());
+    if (after == NULL)
+      strSQL = FormatSQL("delete from GuideData WHERE GuideData.idChannel = '%u'", channelID);
+    else
+      strSQL = FormatSQL("delete from GuideData WHERE GuideData.idChannel = '%u' AND GuideData.EndTime > '%s'", channelID, after.GetAsDBDateTime().c_str());
 
     m_pDS->exec(strSQL.c_str());
 
@@ -413,7 +410,7 @@ bool CTVDatabase::EraseOldEPG()
   }
 }
 
-long CTVDatabase::AddEPGEntry(const cPVREPGInfoTag &info, bool oneWrite, bool firstWrite, bool lastWrite)
+long CTVDatabase::AddEPGEntry(const CPVREpgInfoTag &info, bool oneWrite, bool firstWrite, bool lastWrite)
 {
   try
   {
@@ -423,18 +420,18 @@ long CTVDatabase::AddEPGEntry(const cPVREPGInfoTag &info, bool oneWrite, bool fi
     if (!oneWrite && firstWrite)
       m_pDS->insert();
 
-    if (info.GetUniqueBroadcastID() > 0)
+    if (info.UniqueBroadcastID() > 0)
     {
       CStdString SQL = FormatSQL("INSERT INTO GuideData (idDatabaseBroadcast, idChannel, StartTime, "
                                  "EndTime, strTitle, strPlotOutline, strPlot, GenreType, GenreSubType, "
                                  "firstAired, parentalRating, starRating, notify, seriesNum, "
                                  "episodeNum, episodePart, episodeName, idUniqueBroadcast) "
                                  "VALUES (NULL,'%i','%s','%s','%s','%s','%s','%i','%i','%s','%i','%i','%i','%s','%s','%s','%s','%i')\n",
-                                 info.ChannelID(), info.Start().GetAsDBDateTime().c_str(), info.End().GetAsDBDateTime().c_str(),
+                                 info.ChannelTag()->ChannelID(), info.Start().GetAsDBDateTime().c_str(), info.End().GetAsDBDateTime().c_str(),
                                  info.Title().c_str(), info.PlotOutline().c_str(), info.Plot().c_str(), info.GenreType(), info.GenreSubType(),
                                  info.FirstAired().GetAsDBDateTime().c_str(), info.ParentalRating(), info.StarRating(), info.Notify(),
                                  info.SeriesNum().c_str(), info.EpisodeNum().c_str(), info.EpisodePart().c_str(), info.EpisodeName().c_str(),
-                                 info.GetUniqueBroadcastID());
+                                 info.UniqueBroadcastID());
 
       if (oneWrite)
       {
@@ -460,7 +457,7 @@ long CTVDatabase::AddEPGEntry(const cPVREPGInfoTag &info, bool oneWrite, bool fi
   return -1;
 }
 
-bool CTVDatabase::UpdateEPGEntry(const cPVREPGInfoTag &info, bool oneWrite, bool firstWrite, bool lastWrite)
+bool CTVDatabase::UpdateEPGEntry(const CPVREpgInfoTag &info, bool oneWrite, bool firstWrite, bool lastWrite)
 {
   try
   {
@@ -471,9 +468,9 @@ bool CTVDatabase::UpdateEPGEntry(const cPVREPGInfoTag &info, bool oneWrite, bool
     if (!oneWrite && firstWrite)
       m_pDS2->insert();
 
-    if (info.GetUniqueBroadcastID() > 0)
+    if (info.UniqueBroadcastID() > 0)
     {
-      CStdString SQL = FormatSQL("select idDatabaseBroadcast from GuideData WHERE (GuideData.idUniqueBroadcast = '%u' OR GuideData.StartTime = '%s') AND GuideData.idChannel = '%u'", info.GetUniqueBroadcastID(), info.Start().GetAsDBDateTime().c_str(), info.ChannelID());
+      CStdString SQL = FormatSQL("select idDatabaseBroadcast from GuideData WHERE (GuideData.idUniqueBroadcast = '%u' OR GuideData.StartTime = '%s') AND GuideData.idChannel = '%u'", info.UniqueBroadcastID(), info.Start().GetAsDBDateTime().c_str(), info.ChannelTag()->ChannelID());
       m_pDS->query(SQL.c_str());
 
       if (m_pDS->num_rows() > 0)
@@ -485,11 +482,11 @@ bool CTVDatabase::UpdateEPGEntry(const cPVREPGInfoTag &info, bool oneWrite, bool
                         "strPlot='%s', GenreType=%i, GenreSubType=%i, firstAired='%s', parentalRating=%i, starRating=%i, "
                         "notify=%i, seriesNum='%s', episodeNum='%s', episodePart='%s', episodeName='%s', "
                         "idUniqueBroadcast=%i WHERE idDatabaseBroadcast=%i",
-                        info.ChannelID(), info.Start().GetAsDBDateTime().c_str(), info.End().GetAsDBDateTime().c_str(),
+                        info.ChannelTag()->ChannelID(), info.Start().GetAsDBDateTime().c_str(), info.End().GetAsDBDateTime().c_str(),
                         info.Title().c_str(), info.PlotOutline().c_str(), info.Plot().c_str(), info.GenreType(), info.GenreSubType(),
                         info.FirstAired().GetAsDBDateTime().c_str(), info.ParentalRating(), info.StarRating(), info.Notify(),
                         info.SeriesNum().c_str(), info.EpisodeNum().c_str(), info.EpisodePart().c_str(), info.EpisodeName().c_str(),
-                        info.GetUniqueBroadcastID(), id);
+                        info.UniqueBroadcastID(), id);
 
         if (oneWrite)
           m_pDS->exec(SQL.c_str());
@@ -506,11 +503,11 @@ bool CTVDatabase::UpdateEPGEntry(const cPVREPGInfoTag &info, bool oneWrite, bool
                         "firstAired, parentalRating, starRating, notify, seriesNum, "
                         "episodeNum, episodePart, episodeName, idUniqueBroadcast) "
                         "values (NULL,'%i','%s','%s','%s','%s','%s','%i','%i','%s','%i','%i','%i','%s','%s','%s','%s','%i')\n",
-                        info.ChannelID(), info.Start().GetAsDBDateTime().c_str(), info.End().GetAsDBDateTime().c_str(),
+                        info.ChannelTag()->ChannelID(), info.Start().GetAsDBDateTime().c_str(), info.End().GetAsDBDateTime().c_str(),
                         info.Title().c_str(), info.PlotOutline().c_str(), info.Plot().c_str(), info.GenreType(), info.GenreSubType(),
                         info.FirstAired().GetAsDBDateTime().c_str(), info.ParentalRating(), info.StarRating(), info.Notify(),
                         info.SeriesNum().c_str(), info.EpisodeNum().c_str(), info.EpisodePart().c_str(), info.EpisodeName().c_str(),
-                        info.GetUniqueBroadcastID());
+                        info.UniqueBroadcastID());
 
         if (oneWrite)
         {
@@ -524,10 +521,10 @@ bool CTVDatabase::UpdateEPGEntry(const cPVREPGInfoTag &info, bool oneWrite, bool
           m_pDS2->add_insert_sql(SQL);
         }
 
-        if (GetEPGDataEnd(info.ChannelID()) > info.End())
+        if (GetEPGDataEnd(info.ChannelTag()->ChannelID()) > info.End())
         {
-          CLog::Log(LOGNOTICE, "TV-Database: erasing epg data due to event change on channel %s", info.ChannelName().c_str());
-          EraseChannelEPGAfterTime(info.ChannelID(), info.End());
+          CLog::Log(LOGNOTICE, "TV-Database: erasing epg data due to event change on channel %s", info.ChannelTag()->ChannelName().c_str());
+          EraseEPGForChannel(info.ChannelTag()->ChannelID(), info.End());
         }
       }
     }
@@ -541,12 +538,12 @@ bool CTVDatabase::UpdateEPGEntry(const cPVREPGInfoTag &info, bool oneWrite, bool
   }
   catch (...)
   {
-    CLog::Log(LOGERROR, "%s (%s on Channel %s) failed", __FUNCTION__, info.Title().c_str(), info.ChannelName().c_str());
+    CLog::Log(LOGERROR, "%s (%s on Channel %s) failed", __FUNCTION__, info.Title().c_str(), info.ChannelTag()->ChannelName().c_str());
   }
   return false;
 }
 
-bool CTVDatabase::RemoveEPGEntry(const cPVREPGInfoTag &info)
+bool CTVDatabase::RemoveEPGEntry(const CPVREpgInfoTag &info)
 {
   try
   {
@@ -554,10 +551,10 @@ bool CTVDatabase::RemoveEPGEntry(const cPVREPGInfoTag &info)
     if (NULL == m_pDS.get()) return false;
 
 
-    if (info.GetUniqueBroadcastID() < 0)   // no match found, update required
+    if (info.UniqueBroadcastID() < 0)   // no match found, update required
       return false;
 
-    CStdString strSQL=FormatSQL("delete from GuideData WHERE GuideData.idUniqueBroadcast = '%u'", info.GetUniqueBroadcastID() );
+    CStdString strSQL=FormatSQL("delete from GuideData WHERE GuideData.idUniqueBroadcast = '%u'", info.UniqueBroadcastID() );
 
     m_pDS->exec(strSQL.c_str());
     return true;
@@ -597,15 +594,19 @@ bool CTVDatabase::RemoveEPGEntries(unsigned int channelID, const CDateTime &star
   }
 }
 
-bool CTVDatabase::GetEPGForChannel(const cPVRChannelInfoTag &channelinfo, cPVREpg *epg, const CDateTime &start, const CDateTime &end)
+bool CTVDatabase::GetEPGForChannel(CPVREpg *epg, const CDateTime &start, const CDateTime &end)
 {
   try
   {
     if (NULL == m_pDB.get()) return false;
     if (NULL == m_pDS.get()) return false;
 
+    CPVRChannel *channel = epg->Channel();
+    if (!channel)
+      return false;
+
     CStdString SQL=FormatSQL("select * from GuideData WHERE GuideData.idChannel = '%u' AND GuideData.EndTime > '%s' "
-                             "AND GuideData.StartTime < '%s' ORDER BY GuideData.StartTime;", channelinfo.ChannelID(), start.GetAsDBDateTime().c_str(), end.GetAsDBDateTime().c_str());
+                             "AND GuideData.StartTime < '%s' ORDER BY GuideData.StartTime;", channel->ChannelID(), start.GetAsDBDateTime().c_str(), end.GetAsDBDateTime().c_str());
     m_pDS->query( SQL.c_str() );
 
     if (m_pDS->num_rows() <= 0)
@@ -630,7 +631,11 @@ bool CTVDatabase::GetEPGForChannel(const cPVRChannelInfoTag &channelinfo, cPVREp
       broadcast.starttime = startTime_t;
       broadcast.endtime = endTime_t;
 
-      cPVREpg::Add(&broadcast, epg);
+      CPVREpg *epg = channel->GetEPG();
+      if (!epg)
+        continue;
+
+      epg->UpdateEntry(&broadcast, false);
 
       m_pDS->next();
     }
@@ -757,7 +762,7 @@ bool CTVDatabase::EraseClientChannels(long clientID)
   }
 }
 
-long CTVDatabase::AddDBChannel(const cPVRChannelInfoTag &info, bool oneWrite, bool firstWrite, bool lastWrite)
+long CTVDatabase::AddDBChannel(const CPVRChannel &info, bool oneWrite, bool firstWrite, bool lastWrite)
 {
   try
   {
@@ -772,10 +777,10 @@ long CTVDatabase::AddDBChannel(const cPVRChannelInfoTag &info, bool oneWrite, bo
                                  "ClientNumber, UniqueId, IconPath, GroupID, encryption, radio, "
                                  "grabEpg, EpgGrabber, hide, Virtual, strInputFormat, strStreamURL) "
                                  "values (NULL, '%i', '%i', '%s', '%s', '%i', '%i', '%s', '%i', '%i', '%i', '%i', '%s', '%i', '%i', '%s', '%s')\n",
-                                 info.ClientID(), info.Number(), info.Name().c_str(), info.ClientName().c_str(),
-                                 info.ClientNumber(), info.UniqueID(), info.m_IconPath.c_str(), info.m_iGroupID,
-                                 info.EncryptionSystem(), info.m_radio, info.m_grabEpg, info.m_grabber.c_str(),
-                                 info.m_hide, info.m_bIsVirtual, info.m_strInputFormat.c_str(), info.m_strStreamURL.c_str());
+                                 info.ClientID(), info.ChannelNumber(), info.ChannelName().c_str(), info.ClientChannelName().c_str(),
+                                 info.ClientChannelNumber(), info.UniqueID(), info.m_strIconPath.c_str(), info.m_iChannelGroupId,
+                                 info.EncryptionSystem(), info.m_bIsRadio, info.m_bEPGEnabled, info.m_strEPGScraper.c_str(),
+                                 info.m_bIsHidden, info.m_bIsVirtual, info.m_strInputFormat.c_str(), info.m_strStreamURL.c_str());
 
       if (oneWrite)
       {
@@ -796,13 +801,13 @@ long CTVDatabase::AddDBChannel(const cPVRChannelInfoTag &info, bool oneWrite, bo
   }
   catch (...)
   {
-    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, info.m_strChannel.c_str());
+    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, info.m_strChannelName.c_str());
   }
 
   return -1;
 }
 
-bool CTVDatabase::RemoveDBChannel(const cPVRChannelInfoTag &info)
+bool CTVDatabase::RemoveDBChannel(const CPVRChannel &info)
 {
   try
   {
@@ -824,35 +829,32 @@ bool CTVDatabase::RemoveDBChannel(const cPVRChannelInfoTag &info)
   }
   catch (...)
   {
-    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, info.m_strChannel.c_str());
+    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, info.m_strChannelName.c_str());
     return false;
   }
 }
 
-long CTVDatabase::UpdateDBChannel(const cPVRChannelInfoTag &info)
+long CTVDatabase::UpdateDBChannel(const CPVRChannel &info)
 {
   try
   {
     if (NULL == m_pDB.get()) return -1;
     if (NULL == m_pDS.get()) return -1;
 
-    long channelId = info.m_iIdChannel;
+    long channelId = info.ChannelID();
 
     CStdString SQL;
-    SQL=FormatSQL("select * from Channels WHERE Channels.idChannel = '%u'", channelId);
-    m_pDS->query(SQL.c_str());
-
-    if (m_pDS->num_rows() > 0)
+    if (channelId > 0)
     {
       m_pDS->close();
       // update the item
       SQL = FormatSQL("update Channels set idClient=%i,Number=%i,Name='%s',ClientName='%s',"
                       "ClientNumber=%i,UniqueId=%i,IconPath='%s',GroupID=%i,encryption=%i,radio=%i,"
                       "hide=%i,grabEpg=%i,EpgGrabber='%s',Virtual=%i,strInputFormat='%s',strStreamURL='%s' where idChannel=%i",
-                      info.ClientID(), info.Number(), info.Name().c_str(), info.ClientName().c_str(),
-                      info.ClientNumber(), info.UniqueID(), info.m_IconPath.c_str(), info.m_iGroupID,
-                      info.EncryptionSystem(), info.m_radio, info.m_hide, info.m_grabEpg, info.m_grabber.c_str(),
-                      info.m_bIsVirtual, info.m_strInputFormat.c_str(), info.m_strStreamURL.c_str(), channelId);
+                      info.ClientID(), info.ChannelNumber(), info.ChannelName().c_str(), info.ClientChannelName().c_str(),
+                      info.ClientChannelNumber(), info.UniqueID(), info.IconPath().c_str(), info.GroupID(),
+                      info.EncryptionSystem(), info.IsRadio(), info.IsHidden(), info.EPGEnabled(), info.EPGScraper().c_str(),
+                      info.IsVirtual(), info.InputFormat().c_str(), info.StreamURL().c_str(), channelId);
 
       m_pDS->exec(SQL.c_str());
       return channelId;
@@ -864,10 +866,10 @@ long CTVDatabase::UpdateDBChannel(const cPVRChannelInfoTag &info)
                       "ClientNumber, UniqueId, IconPath, GroupID, encryption, radio, "
                       "grabEpg, EpgGrabber, hide, Virtual, strInputFormat, strStreamURL) "
                       "values (NULL, '%i', '%i', '%s', '%s', '%i', '%i', '%s', '%i', '%i', '%i', '%i', '%s', '%i', '%i', '%s', '%s')\n",
-                      info.ClientID(), info.Number(), info.Name().c_str(), info.ClientName().c_str(),
-                      info.ClientNumber(), info.UniqueID(), info.m_IconPath.c_str(), info.m_iGroupID,
-                      info.EncryptionSystem(), info.m_radio, info.m_grabEpg, info.m_grabber.c_str(),
-                      info.m_hide, info.m_bIsVirtual, info.m_strInputFormat.c_str(), info.m_strStreamURL.c_str());
+                      info.ClientID(), info.ChannelNumber(), info.ChannelName().c_str(), info.ClientChannelName().c_str(),
+                      info.ClientChannelNumber(), info.UniqueID(), info.IconPath().c_str(), info.GroupID(),
+                      info.EncryptionSystem(), info.IsRadio(), info.EPGEnabled(), info.EPGScraper().c_str(),
+                      info.IsHidden(), info.IsVirtual(), info.InputFormat().c_str(), info.StreamURL().c_str());
 
       m_pDS->exec(SQL.c_str());
       channelId = (long)m_pDS->lastinsertid();
@@ -876,19 +878,19 @@ long CTVDatabase::UpdateDBChannel(const cPVRChannelInfoTag &info)
   }
   catch (...)
   {
-    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, info.m_strChannel.c_str());
+    CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, info.m_strChannelName.c_str());
     return false;
   }
 }
 
-bool CTVDatabase::HasChannel(const cPVRChannelInfoTag &info)
+bool CTVDatabase::HasChannel(const CPVRChannel &info)
 {
   try
   {
     if (NULL == m_pDB.get()) return false;
     if (NULL == m_pDS.get()) return false;
 
-    CStdString SQL=FormatSQL("select * from Channels WHERE Channels.Name = '%s' AND Channels.ClientNumber = '%i'", info.m_strChannel.c_str(), info.m_iClientNum);
+    CStdString SQL=FormatSQL("select * from Channels WHERE Channels.Name = '%s' AND Channels.ClientNumber = '%i'", info.m_strChannelName.c_str(), info.m_iClientChannelNumber);
 
     m_pDS->query(SQL.c_str());
 
@@ -958,7 +960,7 @@ int CTVDatabase::GetNumHiddenChannels()
   }
 }
 
-bool CTVDatabase::GetDBChannelList(cPVRChannels &results, bool radio)
+bool CTVDatabase::GetDBChannelList(CPVRChannels &results, bool radio)
 {
   try
   {
@@ -971,28 +973,26 @@ bool CTVDatabase::GetDBChannelList(cPVRChannels &results, bool radio)
 
     while (!m_pDS->eof())
     {
-      cPVRChannelInfoTag channel;
+      CPVRChannel *channel = new CPVRChannel();
 
-      channel.m_clientID            = m_pDS->fv("idClient").get_asInt();
-      channel.m_iIdChannel          = m_pDS->fv("idChannel").get_asInt();
-      channel.m_iChannelNum         = m_pDS->fv("Number").get_asInt();
-      channel.m_strChannel          = m_pDS->fv("Name").get_asString();
-      channel.m_strClientName       = m_pDS->fv("ClientName").get_asString();
-      channel.m_iClientNum          = m_pDS->fv("ClientNumber").get_asInt();
-      channel.m_iIdUnique           = m_pDS->fv("UniqueId").get_asInt();
-      channel.m_IconPath            = m_pDS->fv("IconPath").get_asString();
-      channel.m_iGroupID            = m_pDS->fv("GroupID").get_asInt();
-      channel.m_encryptionSystem    = m_pDS->fv("encryption").get_asInt();
-      channel.m_radio               = m_pDS->fv("radio").get_asBool();
-      channel.m_hide                = m_pDS->fv("hide").get_asBool();
-      channel.m_grabEpg             = m_pDS->fv("grabEpg").get_asBool();
-      channel.m_grabber             = m_pDS->fv("EpgGrabber").get_asString();
-      channel.m_strInputFormat      = m_pDS->fv("strInputFormat").get_asString();
-      channel.m_strStreamURL        = m_pDS->fv("strStreamURL").get_asString();
-      channel.m_countWatched        = m_pDS->fv("countWatched").get_asInt();
-      channel.m_secondsWatched      = m_pDS->fv("timeWatched").get_asInt();
-      channel.m_bIsVirtual          = m_pDS->fv("Virtual").get_asBool();
-      channel.m_lastTimeWatched.SetFromDBDateTime(m_pDS->fv("lastTimeWatched").get_asString());
+      channel->m_iClientId               = m_pDS->fv("idClient").get_asInt();
+      channel->m_iDatabaseId             = m_pDS->fv("idChannel").get_asInt();
+      channel->m_iChannelNumber          = m_pDS->fv("Number").get_asInt();
+      channel->m_strChannelName          = m_pDS->fv("Name").get_asString();
+      channel->m_strClientChannelName    = m_pDS->fv("ClientName").get_asString();
+      channel->m_iClientChannelNumber    = m_pDS->fv("ClientNumber").get_asInt();
+      channel->m_iUniqueId               = m_pDS->fv("UniqueId").get_asInt();
+      channel->m_strIconPath             = m_pDS->fv("IconPath").get_asString();
+      channel->m_iChannelGroupId         = m_pDS->fv("GroupID").get_asInt();
+      channel->m_iClientEncryptionSystem = m_pDS->fv("encryption").get_asInt();
+      channel->m_bIsRadio                = m_pDS->fv("radio").get_asBool();
+      channel->m_bIsHidden               = m_pDS->fv("hide").get_asBool();
+      channel->m_bEPGEnabled             = m_pDS->fv("grabEpg").get_asBool();
+      channel->m_strEPGScraper           = m_pDS->fv("EpgGrabber").get_asString();
+      channel->m_strInputFormat          = m_pDS->fv("strInputFormat").get_asString();
+      channel->m_strStreamURL            = m_pDS->fv("strStreamURL").get_asString();
+      channel->m_bIsVirtual              = m_pDS->fv("Virtual").get_asBool();
+      channel->UpdatePath();
 
       results.push_back(channel);
       m_pDS->next();
@@ -1008,100 +1008,6 @@ bool CTVDatabase::GetDBChannelList(cPVRChannels &results, bool radio)
     return false;
   }
 
-  return false;
-}
-
-bool CTVDatabase::EraseChannelLinkageMap()
-{
-  try
-  {
-    if (NULL == m_pDB.get()) return false;
-    if (NULL == m_pDS.get()) return false;
-
-    CStdString strSQL=FormatSQL("delete from ChannelLinkageMap");
-
-    m_pDS->exec(strSQL.c_str());
-    return true;
-  }
-  catch (...)
-  {
-    CLog::Log(LOGERROR, "%s failed", __FUNCTION__);
-    return false;
-  }
-}
-
-long CTVDatabase::AddChannelLinkage(int PortalChannel, int LinkedChannel)
-{
-  try
-  {
-    long idMapping;
-
-    if (PortalChannel < 0)    return -1;
-    if (LinkedChannel < 0)    return -1;
-    if (NULL == m_pDB.get())  return -1;
-    if (NULL == m_pDS.get())  return -1;
-
-    CStdString SQL=FormatSQL("insert into ChannelLinkageMap (idMapping, idPortalChannel, idLinkedChannel) values (NULL, '%i', '%i')", PortalChannel, LinkedChannel);
-    m_pDS->exec(SQL.c_str());
-    idMapping = (long)m_pDS->lastinsertid();
-
-    return idMapping;
-  }
-  catch (...)
-  {
-    CLog::Log(LOGERROR, "%s (%i-%i) failed", __FUNCTION__, PortalChannel, LinkedChannel);
-  }
-  return -1;
-}
-
-bool CTVDatabase::DeleteChannelLinkage(unsigned int channelId)
-{
-  try
-  {
-    if (NULL == m_pDB.get()) return false;
-    if (NULL == m_pDS.get()) return false;
-
-    if (channelId < 0)   // no match found, update required
-      return false;
-
-    CStdString strSQL=FormatSQL("delete from ChannelLinkageMap WHERE idPortalChannel='%u' OR idLinkedChannel='%u'", channelId, channelId);
-
-    m_pDS->exec(strSQL.c_str());
-    return true;
-  }
-  catch (...)
-  {
-    CLog::Log(LOGERROR, "%s (%i) failed", __FUNCTION__, channelId);
-    return false;
-  }
-}
-
-bool CTVDatabase::GetChannelLinkageMap(cPVRChannelInfoTag &channel)
-{
-  try
-  {
-    if (NULL == m_pDB.get()) return false;
-    if (NULL == m_pDS.get()) return false;
-
-    channel.ClearChannelLinkage();
-
-    CStdString SQL = FormatSQL("select * from ChannelLinkageMap WHERE ChannelLinkageMap.idPortalChannel=%u ORDER BY ChannelLinkageMap.idLinkedChannel", channel.ChannelID());
-    m_pDS->query(SQL.c_str());
-
-    while (!m_pDS->eof())
-    {
-      channel.AddChannelLinkage(m_pDS->fv("idLinkedChannel").get_asInt());
-      m_pDS->next();
-    }
-
-    m_pDS->close();
-    return true;
-  }
-  catch (...)
-  {
-    CLog::Log(LOGERROR, "%s failed", __FUNCTION__);
-    return false;
-  }
   return false;
 }
 
@@ -1172,7 +1078,7 @@ bool CTVDatabase::DeleteChannelGroup(unsigned int GroupId)
   }
 }
 
-bool CTVDatabase::GetChannelGroupList(cPVRChannelGroups &results)
+bool CTVDatabase::GetChannelGroupList(CPVRChannelGroups &results)
 {
   try
   {
@@ -1184,7 +1090,7 @@ bool CTVDatabase::GetChannelGroupList(cPVRChannelGroups &results)
 
     while (!m_pDS->eof())
     {
-      cPVRChannelGroup data;
+      CPVRChannelGroup data;
 
       data.SetGroupID(m_pDS->fv("idGroup").get_asInt());
       data.SetGroupName(m_pDS->fv("groupName").get_asString());
@@ -1363,7 +1269,7 @@ bool CTVDatabase::DeleteRadioChannelGroup(unsigned int GroupId)
   }
 }
 
-bool CTVDatabase::GetRadioChannelGroupList(cPVRChannelGroups &results)
+bool CTVDatabase::GetRadioChannelGroupList(CPVRChannelGroups &results)
 {
   try
   {
@@ -1375,7 +1281,7 @@ bool CTVDatabase::GetRadioChannelGroupList(cPVRChannelGroups &results)
 
     while (!m_pDS->eof())
     {
-      cPVRChannelGroup data;
+      CPVRChannelGroup data;
 
       data.SetGroupID(m_pDS->fv("idGroup").get_asInt());
       data.SetGroupName(m_pDS->fv("groupName").get_asString());

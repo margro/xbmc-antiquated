@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2005-2009 Team XBMC
+ *      Copyright (C) 2005-2010 Team XBMC
  *      http://www.xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -25,7 +25,6 @@
 #include "GUIWindowTV.h"
 #include "GUIWindowManager.h"
 #include "utils/GUIInfoManager.h"
-#include "PVRManager.h"
 #ifdef HAS_VIDEO_PLAYBACK
 #include "cores/VideoRenderers/RenderManager.h"
 #endif
@@ -41,6 +40,12 @@
 #include "GUIDialogOK.h"
 #include "GUIDialogProgress.h"
 #include "GUIDialogSelect.h"
+
+#include "PVRManager.h"
+#include "PVRChannelGroups.h"
+#include "PVRChannelGroup.h"
+#include "PVREpgInfoTag.h"
+#include "PVRTimerInfoTag.h"
 
 #define CHANNELCHECKDELTA     600 // seconds before checking for changes inside channels list
 #define TIMERCHECKDELTA       300 // seconds before checking for changes inside timers list
@@ -268,7 +273,7 @@ void CPVRManager::OnClientMessage(const long clientID, const PVR_EVENT clientEve
       {
         CLog::Log(LOGDEBUG, "%s - PVR: client_%ld timers changed", __FUNCTION__, clientID);
         PVRTimers.Update();
-        SyncInfo();
+        UpdateRecordingsCache();
 
         CGUIWindowTV *pTVWin = (CGUIWindowTV *)g_windowManager.GetWindow(WINDOW_TV);
         if (pTVWin)
@@ -279,7 +284,7 @@ void CPVRManager::OnClientMessage(const long clientID, const PVR_EVENT clientEve
     case PVR_EVENT_RECORDINGS_CHANGE:
       {
         CLog::Log(LOGDEBUG, "%s - PVR: client_%ld recording list changed", __FUNCTION__, clientID);
-        SyncInfo();
+        UpdateRecordingsCache();
 
         CGUIWindowTV *pTVWin = (CGUIWindowTV *)g_windowManager.GetWindow(WINDOW_TV);
         if (pTVWin)
@@ -290,7 +295,7 @@ void CPVRManager::OnClientMessage(const long clientID, const PVR_EVENT clientEve
     case PVR_EVENT_CHANNELS_CHANGE:
       {
         CLog::Log(LOGDEBUG, "%s - PVR: client_%ld channel list changed", __FUNCTION__, clientID);
-        SyncInfo();
+        UpdateRecordingsCache();
 
         CGUIWindowTV *pTVWin = (CGUIWindowTV *)g_windowManager.GetWindow(WINDOW_TV);
         if (pTVWin)
@@ -375,82 +380,72 @@ bool CPVRManager::RequestRemoval(AddonPtr addon)
 /** INTERNAL FUNCTIONS                                      **/
 /*************************************************************/
 
+bool CPVRManager::ContinueLastChannel()
+{
+  CLog::Log(LOGNOTICE,"PVR: Try to continue last channel");
+  m_bFirstStart = false;
+  bool bReturn = false;
+
+  m_database.Open();
+  int lastChannel = m_database.GetLastChannel();
+  m_database.Close();
+
+  if (lastChannel > 0)
+  {
+    CPVRChannel *tag = CPVRChannels::GetByChannelIDFromAll(lastChannel);
+    if (!tag)
+      return false;
+
+    CPVRChannels *channels = tag->IsRadio() ?
+        &PVRChannelsRadio : &PVRChannelsTV;
+
+    if (g_guiSettings.GetInt("pvrplayback.startlast") == START_LAST_CHANNEL_MIN)
+      g_settings.m_bStartVideoWindowed = true;
+
+    if (g_application.PlayFile(CFileItem(*channels->at(tag->ChannelNumber()-1))))
+    {
+      CLog::Log(LOGNOTICE,"PVR: Continuing channel '%s'", tag->ChannelName().c_str());
+      bReturn = true;
+    }
+    else
+    {
+      CLog::Log(LOGERROR,"PVR: Can't continue playback on channel '%s'", tag->ChannelName().c_str());
+    }
+  }
+  else
+  {
+    CLog::Log(LOGNOTICE,"PVR: Can't find channel (ID=%i) to continue playback on at startup", lastChannel);
+  }
+
+  return bReturn;
+}
+
 /*************************************************************/
 /** PVRManager Update and control thread                    **/
 /*************************************************************/
 
 void CPVRManager::Process()
 {
-  /* Get TV Channels from Backends */
-  PVRChannelsTV.Load(false);
-
-  /* Get Radio Channels from Backends */
-  PVRChannelsRadio.Load(true);
-
-  /* Load the TV Channel group lists */
-  PVRChannelGroupsTV.Load(false);
-
-  /* Load the Radio Channel group lists */
-  PVRChannelGroupsRadio.Load(true);
+  PVRChannelsTV.Load();             /* Load the TV channels */
+  PVRChannelsRadio.Load();          /* Load the radio channels */
+  PVRChannelGroupsTV.Load(false);   /* Load the TV channel group lists */
+  PVRChannelGroupsRadio.Load(true); /* Load the radio Channel group lists */
 
   /* Continue last watched channel after first startup */
   if (m_bFirstStart && g_guiSettings.GetInt("pvrplayback.startlast") != START_LAST_CHANNEL_OFF)
-  {
-    CLog::Log(LOGNOTICE,"PVR: Try to continue last channel");
-    m_bFirstStart = false;
+    ContinueLastChannel();
 
-    m_database.Open();
-    int lastChannel = m_database.GetLastChannel();
-    if (lastChannel > 0)
-    {
-      cPVRChannelInfoTag *tag = cPVRChannels::GetByChannelIDFromAll(lastChannel);
-      if (tag)
-      {
-        cPVRChannels *channels;
-        if (!tag->IsRadio())
-          channels = &PVRChannelsTV;
-        else
-          channels = &PVRChannelsRadio;
-
-        if (g_guiSettings.GetInt("pvrplayback.startlast") == START_LAST_CHANNEL_MIN)
-          g_settings.m_bStartVideoWindowed = true;
-
-        if (g_application.PlayFile(CFileItem(channels->at(tag->Number()-1))))
-          CLog::Log(LOGNOTICE,"PVR: Continue playback of channel '%s'", tag->Name().c_str());
-        else
-          CLog::Log(LOGERROR,"PVR: Channel '%s' can't continued", tag->Name().c_str());
-      }
-      else
-        CLog::Log(LOGERROR,"PVR: Can't find channel (ID=%i) for continue on startup", lastChannel);
-    }
-    m_database.Close();
-  }
-
-  /* Get Timers from Backends */
-  PVRTimers.Load();
-
-  /* Get Recordings from Backend */
-  PVRRecordings.Load();
-
-  /* Get Epg's from Backend */
-  PVREpgs.Load();
+  PVRTimers.Load();     /* Get timers from the backends */
+  PVRRecordings.Load(); /* Get recordings from the backend */
+  PVREpgs.Start(); /* Start the EPG thread */
 
   int Now = CTimeUtils::GetTimeMS()/1000;
-  int LastEPGCleanup       = Now;
   m_LastTVChannelCheck     = Now;
   m_LastRadioChannelCheck  = Now+CHANNELCHECKDELTA/2;
   m_LastRecordingsCheck    = Now;
-  m_LastEPGUpdate          = Now;
   m_LastTimersCheck        = Now;
-  /* Check the last EPG scan date if XBMC is restarted to prevent a rescan if
-     the time is not longer as one hour ago */
-  m_database.Open();
-  if (m_database.GetLastEPGScanTime() < CDateTime::GetCurrentDateTime()-CDateTimeSpan(0,1,0,0))
-    m_LastEPGScan          = Now-(g_guiSettings.GetInt("pvrepg.epgscan")*60*60)+120;
-  else
-    m_LastEPGScan          = Now;
-  m_database.Close();
 
+  /* main loop */
   while (!m_bStop)
   {
     Now = CTimeUtils::GetTimeMS()/1000;
@@ -484,32 +479,11 @@ void CPVRManager::Process()
     {
       CLog::Log(LOGDEBUG,"PVR: Updating Timers list");
       PVRTimers.Update();
-      SyncInfo();
+      UpdateRecordingsCache();
       CGUIWindowTV *pTVWin = (CGUIWindowTV *)g_windowManager.GetWindow(WINDOW_TV);
       if (pTVWin)
         pTVWin->UpdateData(TV_WINDOW_TIMERS);
       m_LastTimersCheck = Now;
-    }
-
-    /* Check for new or updated EPG entries */
-    if (Now - m_LastEPGScan > g_guiSettings.GetInt("pvrepg.epgscan")*60*60) // don't do this too often
-    {
-      PVREpgs.Update(true);
-      m_LastEPGScan   = Now;
-      m_LastEPGUpdate = Now;  // Data is also updated during scan
-      LastEPGCleanup  = Now;
-    }
-    else if (Now - m_LastEPGUpdate > g_guiSettings.GetInt("pvrepg.epgupdate")*60) // don't do this too often
-    {
-      PVREpgs.Update(false);
-      m_LastEPGUpdate = Now;
-      LastEPGCleanup  = Now;
-    }
-    else if (Now - LastEPGCleanup > EPGCLEANUPCHECKDELTA) // don't do this too often
-    {
-      /* Cleanup EPG Data */
-      PVREpgs.Cleanup();
-      LastEPGCleanup = Now;
     }
 
     EnterCriticalSection(&m_critSection);
@@ -528,25 +502,14 @@ void CPVRManager::Process()
   if (m_currentPlayingChannel || m_currentPlayingRecording)
     g_application.StopPlaying();
 
-  /* Remove Epg's from Memory */
-  PVREpgs.Unload();
+  PVREpgs.Stop(); /* Stop the EPG thread */
 
-  /* Remove recordings from Memory */
+  /* unload the rest */
   PVRRecordings.Unload();
-
-  /* Remove Timers from Memory */
   PVRTimers.Unload();
-
-  /* Remove TV Channel groups from Memory */
   PVRChannelGroupsTV.Unload();
-
-  /* Remove Radio Channel groups from Memory */
   PVRChannelGroupsRadio.Unload();
-
-  /* Remove Radio Channels from Memory */
   PVRChannelsRadio.Unload();
-
-  /* Remove TV Channels from Memory */
   PVRChannelsTV.Unload();
 }
 
@@ -556,49 +519,36 @@ void CPVRManager::Process()
 /*************************************************************/
 
 /********************************************************************
- * CPVRManager SyncInfo
+ * CPVRManager UpdateRecordingsCache
  *
- * Synchronize InfoManager related stuff
+ * Updates the recordings and the "now" and "next" timers
  ********************************************************************/
-void CPVRManager::SyncInfo()
+void CPVRManager::UpdateRecordingsCache()
 {
   EnterCriticalSection(&m_critSection);
 
   PVRRecordings.GetNumRecordings() > 0 ? m_hasRecordings = true : m_hasRecordings = false;
   PVRTimers.GetNumTimers()         > 0 ? m_hasTimers     = true : m_hasTimers = false;
   m_isRecording = false;
-  cPVRTimerInfoTag *nextTimer = NULL;
-
-  m_nowRecordingTitle.clear();
-  m_nowRecordingChannel.clear();
-  m_nowRecordingDateTime.clear();
-  m_nextRecordingTitle.clear();
-  m_nextRecordingChannel.clear();
-  m_nextRecordingDateTime.clear();
+  m_NowRecording.clear();
+  m_NextRecording = NULL;
 
   if (m_hasTimers)
   {
+    CDateTime now = CDateTime::GetCurrentDateTime();
     for (unsigned int i = 0; i < PVRTimers.size(); ++i)
     {
-      if (PVRTimers[i].Active() && (PVRTimers[i].Start() < CDateTime::GetCurrentDateTime() && PVRTimers[i].Stop() > CDateTime::GetCurrentDateTime()))
+      CPVRTimerInfoTag *timerTag = &PVRTimers[i];
+      if (timerTag->Active() && timerTag->Start() <= now && timerTag->Stop() > now)
       {
-        m_nowRecordingTitle.push_back(PVRTimers[i].Title());
-        m_nowRecordingChannel.push_back(PVRChannelsTV.GetNameForChannel(PVRTimers[i].Number()));
-        m_nowRecordingDateTime.push_back(PVRTimers[i].Start().GetAsLocalizedDateTime(false, false));
+        m_NowRecording.push_back(timerTag);
         m_isRecording = true;
       }
-      else if (PVRTimers[i].Active())
+      else if (timerTag->Active())
       {
-        if (!nextTimer || nextTimer->Start() > PVRTimers[i].Start())
-          nextTimer = &PVRTimers[i];
+        if (!m_NextRecording || m_NextRecording->Start() > timerTag->Start())
+          m_NextRecording = timerTag;
       }
-    }
-
-    if (nextTimer)
-    {
-      m_nextRecordingTitle    = nextTimer->Title();
-      m_nextRecordingChannel  = PVRChannelsTV.GetNameForChannel(nextTimer->Number());
-      m_nextRecordingDateTime = nextTimer->Start().GetAsLocalizedDateTime(false, false);
     }
   }
 
@@ -617,7 +567,7 @@ const char* CPVRManager::TranslateCharInfo(DWORD dwInfo)
   {
     if (m_recordingToggleStart == 0)
     {
-      SyncInfo();
+      UpdateRecordingsCache();
       m_recordingToggleStart = CTimeUtils::GetTimeMS();
       m_recordingToggleCurrent = 0;
     }
@@ -625,11 +575,11 @@ const char* CPVRManager::TranslateCharInfo(DWORD dwInfo)
     {
       if (CTimeUtils::GetTimeMS() - m_recordingToggleStart > INFO_TOGGLE_TIME)
       {
-        SyncInfo();
-        if (m_nowRecordingTitle.size() > 0)
+        UpdateRecordingsCache();
+        if (m_NowRecording.size() > 0)
         {
           m_recordingToggleCurrent++;
-          if (m_recordingToggleCurrent > m_nowRecordingTitle.size()-1)
+          if (m_recordingToggleCurrent > m_NowRecording.size()-1)
             m_recordingToggleCurrent = 0;
 
           m_recordingToggleStart = CTimeUtils::GetTimeMS();
@@ -637,28 +587,34 @@ const char* CPVRManager::TranslateCharInfo(DWORD dwInfo)
       }
     }
 
-    if (m_nowRecordingTitle.size() > 0)
-      return m_nowRecordingTitle[m_recordingToggleCurrent];
+    if (m_NowRecording.size() >= m_recordingToggleCurrent + 1)
+      return m_NowRecording[m_recordingToggleCurrent]->Title();
     else
       return "";
   }
   else if (dwInfo == PVR_NOW_RECORDING_CHANNEL)
   {
-    if (m_nowRecordingChannel.size() > 0)
-      return m_nowRecordingChannel[m_recordingToggleCurrent];
+    if (m_NowRecording.size() > 0)
+    {
+      CPVRTimerInfoTag * timerTag = m_NowRecording[m_recordingToggleCurrent];
+      return timerTag ? timerTag->ChannelName() : "";
+    }
     else
       return "";
   }
   else if (dwInfo == PVR_NOW_RECORDING_DATETIME)
   {
-    if (m_nowRecordingDateTime.size() > 0)
-      return m_nowRecordingDateTime[m_recordingToggleCurrent];
+    if (m_NowRecording.size() > 0)
+    {
+      CPVRTimerInfoTag *timerTag = m_NowRecording[m_recordingToggleCurrent];
+      return timerTag ? timerTag->Start().GetAsLocalizedDateTime(false, false) : "";
+    }
     else
       return "";
   }
-  else if (dwInfo == PVR_NEXT_RECORDING_TITLE)    return m_nextRecordingTitle;
-  else if (dwInfo == PVR_NEXT_RECORDING_CHANNEL)  return m_nextRecordingChannel;
-  else if (dwInfo == PVR_NEXT_RECORDING_DATETIME) return m_nextRecordingDateTime;
+  else if (dwInfo == PVR_NEXT_RECORDING_TITLE)    return m_NextRecording ? m_NextRecording->Title() : "";
+  else if (dwInfo == PVR_NEXT_RECORDING_CHANNEL)  return m_NextRecording ? m_NextRecording->ChannelName() : "";
+  else if (dwInfo == PVR_NEXT_RECORDING_DATETIME) return m_NextRecording ? m_NextRecording->Start().GetAsLocalizedDateTime(false, false) : "";
   else if (dwInfo == PVR_BACKEND_NAME)            return m_backendName;
   else if (dwInfo == PVR_BACKEND_VERSION)         return m_backendVersion;
   else if (dwInfo == PVR_BACKEND_HOST)            return m_backendHost;
@@ -768,7 +724,7 @@ const char* CPVRManager::TranslateCharInfo(DWORD dwInfo)
   }
   else if (dwInfo == PVR_NEXT_TIMER)
   {
-    cPVRTimerInfoTag *next = PVRTimers.GetNextActiveTimer();
+    CPVRTimerInfoTag *next = PVRTimers.GetNextActiveTimer();
     if (next != NULL)
     {
       m_nextTimer.Format("%s %s %s %s", g_localizeStrings.Get(19106)
@@ -1015,9 +971,6 @@ void CPVRManager::ResetDatabase()
   m_database.EraseEPG();
   pDlgProgress->SetPercentage(30);
 
-  m_database.EraseChannelLinkageMap();
-  pDlgProgress->SetPercentage(40);
-
   m_database.EraseChannelGroups();
   pDlgProgress->SetPercentage(50);
 
@@ -1044,36 +997,12 @@ void CPVRManager::ResetEPG()
 {
   CLog::Log(LOGNOTICE,"PVR: EPG is being erased");
 
-  CGUIDialogProgress* pDlgProgress = (CGUIDialogProgress*)g_windowManager.GetWindow(WINDOW_DIALOG_PROGRESS);
-  pDlgProgress->SetLine(0, "");
-  pDlgProgress->SetLine(1, g_localizeStrings.Get(19186));
-  pDlgProgress->SetLine(2, "");
-  pDlgProgress->StartModal();
-  pDlgProgress->Progress();
-
   PVREpgs.InihibitUpdate(true);
+  PVREpgs.RemoveAllEntries(true);
+  PVREpgs.InihibitUpdate(false);
+  PVREpgs.UpdateEPG(true);
 
-  if (m_currentPlayingRecording || m_currentPlayingChannel)
-  {
-    CLog::Log(LOGNOTICE,"PVR: Is playing data, stopping playback");
-    g_application.StopPlaying();
-  }
-  pDlgProgress->SetPercentage(10);
-
-  Stop();
-  pDlgProgress->SetPercentage(30);
-
-  m_database.Open();
-  pDlgProgress->SetPercentage(50);
-
-  m_database.EraseEPG();
-  pDlgProgress->SetPercentage(70);
-
-  m_database.Close();
-  CLog::Log(LOGNOTICE,"PVR: EPG reset finished, starting PVR Subsystem again");
-  Start();
-  pDlgProgress->SetPercentage(100);
-  pDlgProgress->Close();
+  CLog::Log(LOGNOTICE,"PVR: EPG reset finished");
 }
 
 bool CPVRManager::IsPlayingTV()
@@ -1151,12 +1080,28 @@ CStdString CPVRManager::GetCurrentInputFormat()
   return "";
 }
 
+bool CPVRManager::GetCurrentChannel(const CPVRChannel *channel)
+{
+  if (m_currentPlayingChannel)
+  {
+    channel = m_currentPlayingChannel->GetPVRChannelInfoTag();
+    CLog::Log(LOGDEBUG,"%s - current channel '%s'", __FUNCTION__, channel->ChannelName().c_str());
+    return true;
+  }
+  else
+  {
+    CLog::Log(LOGDEBUG,"%s - no current channel set", __FUNCTION__);
+    channel = NULL;
+    return false;
+  }
+}
+
 bool CPVRManager::GetCurrentChannel(int *number, bool *radio)
 {
   if (m_currentPlayingChannel)
   {
     if (number)
-      *number = m_currentPlayingChannel->GetPVRChannelInfoTag()->Number();
+      *number = m_currentPlayingChannel->GetPVRChannelInfoTag()->ChannelNumber();
     if (radio)
       *radio  = m_currentPlayingChannel->GetPVRChannelInfoTag()->IsRadio();
     return true;
@@ -1228,7 +1173,7 @@ int CPVRManager::GetPreviousChannel()
   if (m_currentPlayingChannel == NULL)
     return -1;
 
-  int LastChannel = m_currentPlayingChannel->GetPVRChannelInfoTag()->Number();
+  int LastChannel = m_currentPlayingChannel->GetPVRChannelInfoTag()->ChannelNumber();
 
   if ((m_PreviousChannel[m_PreviousChannelIndex ^ 1] == LastChannel || LastChannel != m_PreviousChannel[0]) && LastChannel != m_PreviousChannel[1])
     m_PreviousChannelIndex ^= 1;
@@ -1236,12 +1181,12 @@ int CPVRManager::GetPreviousChannel()
   return m_PreviousChannel[m_PreviousChannelIndex ^= 1];
 }
 
-bool CPVRManager::CanInstantRecording()
+bool CPVRManager::CanRecordInstantly()
 {
   if (!m_currentPlayingChannel)
     return false;
 
-  const cPVRChannelInfoTag* tag = m_currentPlayingChannel->GetPVRChannelInfoTag();
+  const CPVRChannel* tag = m_currentPlayingChannel->GetPVRChannelInfoTag();
   if (m_clientsProps[tag->ClientID()].SupportTimers)
     return true;
   else
@@ -1253,7 +1198,7 @@ bool CPVRManager::IsRecordingOnPlayingChannel()
   if (!m_currentPlayingChannel)
     return false;
 
-  const cPVRChannelInfoTag* tag = m_currentPlayingChannel->GetPVRChannelInfoTag();
+  const CPVRChannel* tag = m_currentPlayingChannel->GetPVRChannelInfoTag();
   return tag->IsRecording();
 }
 
@@ -1262,10 +1207,10 @@ bool CPVRManager::StartRecordingOnPlayingChannel(bool bOnOff)
   if (!m_currentPlayingChannel)
     return false;
 
-  cPVRChannelInfoTag* tag = m_currentPlayingChannel->GetPVRChannelInfoTag();
+  CPVRChannel* tag = m_currentPlayingChannel->GetPVRChannelInfoTag();
   if (m_clientsProps[tag->ClientID()].SupportTimers)
   {
-    cPVRChannels *channels;
+    CPVRChannels *channels;
     if (!m_currentPlayingChannel->GetPVRChannelInfoTag()->IsRadio())
       channels = &PVRChannelsTV;
     else
@@ -1273,17 +1218,17 @@ bool CPVRManager::StartRecordingOnPlayingChannel(bool bOnOff)
 
     if (bOnOff && tag->IsRecording() == false)
     {
-      cPVRTimerInfoTag newtimer(true);
-      newtimer.SetTitle(tag->Name());
-      CFileItem *item = new CFileItem(newtimer);
+      CPVRTimerInfoTag *newtimer = CPVRTimerInfoTag::InstantTimer();
+      newtimer->SetTitle(tag->ChannelName());
+      CFileItem *item = new CFileItem(*newtimer);
 
-      if (!cPVRTimers::AddTimer(*item))
+      if (!CPVRTimers::AddTimer(*item))
       {
         CGUIDialogOK::ShowAndGetInput(19033,0,19164,0);
         return false;
       }
 
-      channels->at(tag->Number()-1).SetRecording(true); /* Set in channel list */
+      channels->at(tag->ChannelNumber()-1)->SetRecording(true); /* Set in channel list */
       tag->SetRecording(true);                          /* and also in current playing item */
       return true;
     }
@@ -1292,13 +1237,13 @@ bool CPVRManager::StartRecordingOnPlayingChannel(bool bOnOff)
       for (unsigned int i = 0; i < PVRTimers.size(); ++i)
       {
         if (!PVRTimers[i].IsRepeating() && PVRTimers[i].Active() &&
-            (PVRTimers[i].Number() == tag->Number()) &&
+            (PVRTimers[i].Number() == tag->ChannelNumber()) &&
             (PVRTimers[i].Start() <= CDateTime::GetCurrentDateTime()) &&
             (PVRTimers[i].Stop() >= CDateTime::GetCurrentDateTime()))
         {
-          if (cPVRTimers::DeleteTimer(PVRTimers[i], true))
+          if (CPVRTimers::DeleteTimer(PVRTimers[i], true))
           {
-            channels->at(tag->Number()-1).SetRecording(false);  /* Set in channel list */
+            channels->at(tag->ChannelNumber()-1)->SetRecording(false);  /* Set in channel list */
             tag->SetRecording(false);                           /* and also in current playing item */
             return true;
           }
@@ -1508,12 +1453,14 @@ void CPVRManager::TriggerTimersUpdate(bool force)
   m_LastTimersCheck = CTimeUtils::GetTimeMS()/1000-TIMERCHECKDELTA + (force ? 0 : 5);
 }
 
-bool CPVRManager::OpenLiveStream(const cPVRChannelInfoTag* tag)
+bool CPVRManager::OpenLiveStream(const CPVRChannel* tag)
 {
   if (tag == NULL)
     return false;
 
   EnterCriticalSection(&m_critSection);
+
+  CLog::Log(LOGDEBUG,"PVR: opening live stream on channel '%s'", tag->ChannelName().c_str());
 
   /* Check if a channel or recording is already opened and clear it if yes */
   if (m_currentPlayingChannel)
@@ -1547,7 +1494,7 @@ bool CPVRManager::OpenLiveStream(const cPVRChannelInfoTag* tag)
   return true;
 }
 
-bool CPVRManager::OpenRecordedStream(const cPVRRecordingInfoTag* tag)
+bool CPVRManager::OpenRecordedStream(const CPVRRecordingInfoTag* tag)
 {
   if (tag == NULL)
     return false;
@@ -1573,7 +1520,7 @@ bool CPVRManager::OpenRecordedStream(const cPVRRecordingInfoTag* tag)
   return ret;
 }
 
-CStdString CPVRManager::GetLiveStreamURL(const cPVRChannelInfoTag* tag)
+CStdString CPVRManager::GetLiveStreamURL(const CPVRChannel* tag)
 {
   CStdString stream_url;
 
@@ -1787,38 +1734,40 @@ bool CPVRManager::UpdateItem(CFileItem& item)
   g_application.CurrentFileItem() = *m_currentPlayingChannel;
   g_infoManager.SetCurrentItem(*m_currentPlayingChannel);
 
-  cPVRChannelInfoTag* tagNow = item.GetPVRChannelInfoTag();
-  if (tagNow->IsRadio())
+  CPVRChannel* channelTag = item.GetPVRChannelInfoTag();
+  const CPVREpgInfoTag* epgTagNow = channelTag->GetEPGNow();
+
+  if (channelTag->IsRadio())
   {
     CMusicInfoTag* musictag = item.GetMusicInfoTag();
     if (musictag)
     {
-      musictag->SetURL(tagNow->Path());
-      musictag->SetTitle(tagNow->NowTitle());
-      musictag->SetArtist(tagNow->Name());
-    //    musictag->SetAlbum(tag->m_strBouquet);
-      musictag->SetAlbumArtist(tagNow->Name());
-      musictag->SetGenre(tagNow->NowGenre());
-      musictag->SetDuration(tagNow->NowDuration());
+      musictag->SetTitle(epgTagNow->Title());
+      musictag->SetGenre(epgTagNow->Genre());
+      musictag->SetDuration(epgTagNow->GetDuration());
+      musictag->SetURL(channelTag->Path());
+      musictag->SetArtist(channelTag->ChannelName());
+    //    musictag->SetAlbum(epgTagNow->m_strBouquet);
+      musictag->SetAlbumArtist(channelTag->ChannelName());
       musictag->SetLoaded(true);
       musictag->SetComment("");
       musictag->SetLyrics("");
     }
   }
 
-  cPVRChannelInfoTag* tagPrev = item.GetPVRChannelInfoTag();
-  if (tagPrev && tagPrev->Number() != m_LastChannel)
+  CPVRChannel* tagPrev = item.GetPVRChannelInfoTag();
+  if (tagPrev && tagPrev->ChannelNumber() != m_LastChannel)
   {
-    m_LastChannel         = tagPrev->Number();
+    m_LastChannel         = tagPrev->ChannelNumber();
     m_LastChannelChanged  = CTimeUtils::GetTimeMS();
-    if (tagNow->ClientID() == 999)
+    if (channelTag->ClientID() == 999)
       m_playingClientName = g_localizeStrings.Get(19209);
-    else if (!tagNow->IsVirtual())
-      m_playingClientName = m_clients[tagNow->ClientID()]->GetBackendName() + ":" + m_clients[tagNow->ClientID()]->GetConnectionString();
+    else if (!channelTag->IsVirtual())
+      m_playingClientName = m_clients[channelTag->ClientID()]->GetBackendName() + ":" + m_clients[channelTag->ClientID()]->GetConnectionString();
     else
       m_playingClientName = g_localizeStrings.Get(13205);
   }
-  if (CTimeUtils::GetTimeMS() - m_LastChannelChanged >= g_guiSettings.GetInt("pvrplayback.channelentrytimeout") && m_LastChannel != m_PreviousChannel[m_PreviousChannelIndex])
+  if (CTimeUtils::GetTimeMS() - m_LastChannelChanged >= (unsigned int) g_guiSettings.GetInt("pvrplayback.channelentrytimeout") && m_LastChannel != m_PreviousChannel[m_PreviousChannelIndex])
      m_PreviousChannel[m_PreviousChannelIndex ^= 1] = m_LastChannel;
 
   return false;
@@ -1829,7 +1778,7 @@ bool CPVRManager::ChannelSwitch(unsigned int iChannel)
   if (!m_currentPlayingChannel)
     return false;
 
-  cPVRChannels *channels;
+  CPVRChannels *channels;
   if (!m_currentPlayingChannel->GetPVRChannelInfoTag()->IsRadio())
     channels = &PVRChannelsTV;
   else
@@ -1843,7 +1792,7 @@ bool CPVRManager::ChannelSwitch(unsigned int iChannel)
 
   EnterCriticalSection(&m_critSection);
 
-  const cPVRChannelInfoTag* tag = &channels->at(iChannel-1);
+  const CPVRChannel* tag = channels->at(iChannel-1);
 
   /* Store current settings inside Database */
   SaveCurrentChannelSettings();
@@ -1877,7 +1826,7 @@ bool CPVRManager::ChannelUp(unsigned int *newchannel, bool preview/* = false*/)
 {
    if (m_currentPlayingChannel)
    {
-    cPVRChannels *channels;
+    CPVRChannels *channels;
     if (!m_currentPlayingChannel->GetPVRChannelInfoTag()->IsRadio())
       channels = &PVRChannelsTV;
     else
@@ -1888,8 +1837,8 @@ bool CPVRManager::ChannelUp(unsigned int *newchannel, bool preview/* = false*/)
     /* Store current settings inside Database */
     SaveCurrentChannelSettings();
 
-    unsigned int currentTVChannel = m_currentPlayingChannel->GetPVRChannelInfoTag()->Number();
-    const cPVRChannelInfoTag* tag;
+    unsigned int currentTVChannel = m_currentPlayingChannel->GetPVRChannelInfoTag()->ChannelNumber();
+    const CPVRChannel* tag;
     for (unsigned int i = 1; i < channels->size(); i++)
     {
       currentTVChannel += 1;
@@ -1897,7 +1846,7 @@ bool CPVRManager::ChannelUp(unsigned int *newchannel, bool preview/* = false*/)
       if (currentTVChannel > channels->size())
         currentTVChannel = 1;
 
-      tag = &channels->at(currentTVChannel-1);
+      tag = channels->at(currentTVChannel-1);
 
       if ((m_CurrentGroupID != -1) && (m_CurrentGroupID != tag->GroupID()))
         continue;
@@ -1944,7 +1893,7 @@ bool CPVRManager::ChannelDown(unsigned int *newchannel, bool preview/* = false*/
 {
   if (m_currentPlayingChannel)
   {
-    cPVRChannels *channels;
+    CPVRChannels *channels;
     if (!m_currentPlayingChannel->GetPVRChannelInfoTag()->IsRadio())
       channels = &PVRChannelsTV;
     else
@@ -1955,8 +1904,8 @@ bool CPVRManager::ChannelDown(unsigned int *newchannel, bool preview/* = false*/
     /* Store current settings inside Database */
     SaveCurrentChannelSettings();
 
-    int currentTVChannel = m_currentPlayingChannel->GetPVRChannelInfoTag()->Number();
-    const cPVRChannelInfoTag* tag;
+    int currentTVChannel = m_currentPlayingChannel->GetPVRChannelInfoTag()->ChannelNumber();
+    const CPVRChannel* tag;
     for (unsigned int i = 1; i < channels->size(); i++)
     {
       currentTVChannel -= 1;
@@ -1964,7 +1913,7 @@ bool CPVRManager::ChannelDown(unsigned int *newchannel, bool preview/* = false*/
       if (currentTVChannel <= 0)
         currentTVChannel = channels->size();
 
-      tag = &channels->at(currentTVChannel-1);
+      tag = channels->at(currentTVChannel-1);
 
       if ((m_CurrentGroupID != -1) && (m_CurrentGroupID != tag->GroupID()))
         continue;
@@ -2009,7 +1958,7 @@ bool CPVRManager::ChannelDown(unsigned int *newchannel, bool preview/* = false*/
 int CPVRManager::GetTotalTime()
 {
   if (m_currentPlayingChannel)
-    return m_currentPlayingChannel->GetPVRChannelInfoTag()->NowDuration() * 1000;
+    return m_currentPlayingChannel->GetPVRChannelInfoTag()->GetEPGNow()->GetDuration() * 1000;
 
   return 0;
 }
@@ -2024,8 +1973,8 @@ int CPVRManager::GetStartTime()
    * check here if the end of the current running event is reached, if yes update the
    * playing file item with the newest EPG data of the now running event.
    */
-  cPVRChannelInfoTag* tag = m_currentPlayingChannel->GetPVRChannelInfoTag();
-  if (tag->NowEndTime() < CDateTime::GetCurrentDateTime() || tag->NowTitle() == g_localizeStrings.Get(19055))
+  const CPVREpgInfoTag* tag = m_currentPlayingChannel->GetPVRChannelInfoTag()->GetEPGNow();
+  if (tag && (tag->End() < CDateTime::GetCurrentDateTime() || tag->Title().IsEmpty()))
   {
     EnterCriticalSection(&m_critSection);
     UpdateItem(*m_currentPlayingChannel);
@@ -2035,7 +1984,7 @@ int CPVRManager::GetStartTime()
   /* Calculate here the position we have of the running live TV event.
    * "position in ms" = ("current local time" - "event start local time") * 1000
    */
-  CDateTimeSpan time = CDateTime::GetCurrentDateTime() - tag->NowStartTime();
+  CDateTimeSpan time = CDateTime::GetCurrentDateTime() - tag->Start();
   return time.GetDays()    * 1000 * 60 * 60 * 24
        + time.GetHours()   * 1000 * 60 * 60
        + time.GetMinutes() * 1000 * 60

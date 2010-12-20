@@ -23,12 +23,13 @@
 #include "FileItem.h"
 #include "Util.h"
 #include "URL.h"
-#include "PVRManager.h"
 #include "utils/log.h"
-#include "utils/PVRChannels.h"
-#include "utils/PVRRecordings.h"
-#include "utils/PVRTimers.h"
 #include "LocalizeStrings.h"
+
+#include "pvr/PVRManager.h"
+#include "pvr/PVRChannels.h"
+#include "pvr/PVRRecordings.h"
+#include "pvr/PVRTimers.h"
 
 using namespace std;
 using namespace XFILE;
@@ -86,7 +87,7 @@ bool CPVRDirectory::GetDirectory(const CStdString& strPath, CFileItemList &items
   }
   else if (fileName.Left(8) == "channels")
   {
-    return cPVRChannels::GetDirectory(strPath, items) > 0;
+    return CPVRChannels::GetDirectory(strPath, items) > 0;
   }
   else if (fileName.Left(6) == "timers")
   {

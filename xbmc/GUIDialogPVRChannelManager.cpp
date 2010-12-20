@@ -26,11 +26,8 @@
 #include "LocalizeStrings.h"
 #include "MediaManager.h"
 #include "Picture.h"
-#include "PVRManager.h"
 #include "Settings.h"
-#include "TVDatabase.h"
 #include "utils/log.h"
-#include "utils/PVRChannels.h"
 #include "GUISpinControlEx.h"
 #include "GUIEditControl.h"
 #include "GUIRadioButtonControl.h"
@@ -42,6 +39,13 @@
 #include "GUIDialogSelect.h"
 #include "GUIDialogOK.h"
 #include "GUIDialogKeyboard.h"
+
+#include "pvr/PVRChannelGroups.h"
+#include "pvr/PVRChannelGroup.h"
+#include "pvr/PVRChannels.h"
+#include "pvr/PVREpg.h"
+#include "pvr/PVRManager.h"
+#include "pvr/TVDatabase.h"
 
 #define BUTTON_OK                 4
 #define BUTTON_APPLY              5
@@ -90,7 +94,7 @@ bool CGUIDialogPVRChannelManager::OnAction(const CAction& action)
       if (!m_bMovingMode)
       {
         CGUIDialog::OnAction(action);
-        unsigned int iSelected = m_viewControl.GetSelectedItem();
+        int iSelected = m_viewControl.GetSelectedItem();
         if (iSelected != m_iSelected)
         {
           m_iSelected = iSelected;
@@ -314,7 +318,7 @@ bool CGUIDialogPVRChannelManager::OnMessage(CGUIMessage& message)
         if (!pItem->GetProperty("Icon").IsEmpty())
         {
           CFileItemPtr current(new CFileItem("thumb://Current", false));
-          current->SetThumbnailImage(pItem->GetPVRChannelInfoTag()->Icon());
+          current->SetThumbnailImage(pItem->GetPVRChannelInfoTag()->IconPath());
           current->SetLabel(g_localizeStrings.Get(20016));
           items.Add(current);
         }
@@ -499,7 +503,7 @@ bool CGUIDialogPVRChannelManager::OnMessage(CGUIMessage& message)
         pDlgSelect->DoModal();
 
         int selection = pDlgSelect->GetSelectedLabel();
-        if (selection >= 0 && selection <= clients.size())
+        if (selection >= 0 && selection <= (int) clients.size())
         {
           int clientID = clients[selection];
           if (clientID == 999)
@@ -509,11 +513,10 @@ bool CGUIDialogPVRChannelManager::OnMessage(CGUIMessage& message)
             {
               if (!strURL.IsEmpty())
               {
-                cPVRChannelInfoTag newchannel;
-                newchannel.Reset();
-                newchannel.SetName(g_localizeStrings.Get(19204));
+                CPVRChannel newchannel;
+                newchannel.SetChannelName(g_localizeStrings.Get(19204));
                 newchannel.SetRadio(m_bIsRadio);
-                newchannel.SetGrabEpg(false);
+                newchannel.SetEPGEnabled(false);
                 newchannel.SetVirtual(true);
                 newchannel.SetStreamURL(strURL);
                 newchannel.SetClientID(999);
@@ -528,7 +531,7 @@ bool CGUIDialogPVRChannelManager::OnMessage(CGUIMessage& message)
                 channel->SetProperty("Name", g_localizeStrings.Get(19204));
                 channel->SetProperty("UseEPG", false);
                 channel->SetProperty("GroupId", (int)newchannel.GroupID());
-                channel->SetProperty("Icon", newchannel.Icon());
+                channel->SetProperty("Icon", newchannel.IconPath());
                 channel->SetProperty("EPGSource", (int)0);
                 channel->SetProperty("ClientName", g_localizeStrings.Get(19209));
 
@@ -633,7 +636,7 @@ void CGUIDialogPVRChannelManager::SetData(int iItem)
   if (iItem < 0 || iItem >= (int)m_channelItems->Size()) return;
 
   CFileItemPtr pItem = m_channelItems->Get(iItem);
-//  cPVRChannelInfoTag *infotag = pItem->GetPVRChannelInfoTag();
+//  CPVRChannel *infotag = pItem->GetPVRChannelInfoTag();
 
   pEdit = (CGUIEditControl *)GetControl(EDIT_NAME);
   if (pEdit)
@@ -669,27 +672,27 @@ void CGUIDialogPVRChannelManager::Update()
   {
     for (unsigned int i = 0; i < PVRChannelsTV.size(); i++)
     {
-      CFileItemPtr channel(new CFileItem(PVRChannelsTV[i]));
-      channel->SetProperty("ActiveChannel", (bool)!PVRChannelsTV[i].IsHidden());
-      channel->SetProperty("Name", PVRChannelsTV[i].Name());
-      channel->SetProperty("UseEPG", PVRChannelsTV[i].GrabEpg());
-      channel->SetProperty("GroupId", (int)PVRChannelsTV[i].GroupID());
-      channel->SetProperty("Icon", PVRChannelsTV[i].Icon());
+      CFileItemPtr channel(new CFileItem(*PVRChannelsTV[i]));
+      channel->SetProperty("ActiveChannel", !PVRChannelsTV[i]->IsHidden());
+      channel->SetProperty("Name", PVRChannelsTV[i]->ChannelName());
+      channel->SetProperty("UseEPG", PVRChannelsTV[i]->EPGEnabled());
+      channel->SetProperty("GroupId", PVRChannelsTV[i]->GroupID());
+      channel->SetProperty("Icon", PVRChannelsTV[i]->IconPath());
       channel->SetProperty("EPGSource", (int)0);
-      CStdString number; number.Format("%i", PVRChannelsTV[i].Number());
+      CStdString number; number.Format("%i", PVRChannelsTV[i]->ChannelNumber());
       channel->SetProperty("Number", number);
 
-      if (PVRChannelsTV[i].IsVirtual())
+      if (PVRChannelsTV[i]->IsVirtual())
       {
         channel->SetProperty("Virtual", true);
-        channel->SetProperty("StreamURL", PVRChannelsTV[i].StreamURL());
+        channel->SetProperty("StreamURL", PVRChannelsTV[i]->StreamURL());
       }
 
       CStdString clientName;
-      if (PVRChannelsTV[i].ClientID() == 999) /* XBMC internal */
+      if (PVRChannelsTV[i]->ClientID() == 999) /* XBMC internal */
         clientName = g_localizeStrings.Get(19209);
       else
-        clientName = g_PVRManager.Clients()->find(PVRChannelsTV[i].ClientID())->second->GetBackendName() + ":" + g_PVRManager.Clients()->find(PVRChannelsTV[i].ClientID())->second->GetConnectionString();
+        clientName = g_PVRManager.Clients()->find(PVRChannelsTV[i]->ClientID())->second->GetBackendName() + ":" + g_PVRManager.Clients()->find(PVRChannelsTV[i]->ClientID())->second->GetConnectionString();
       channel->SetProperty("ClientName", clientName);
 
       m_channelItems->Add(channel);
@@ -718,27 +721,27 @@ void CGUIDialogPVRChannelManager::Update()
   {
     for (unsigned int i = 0; i < PVRChannelsRadio.size(); i++)
     {
-      CFileItemPtr channel(new CFileItem(PVRChannelsRadio[i]));
-      channel->SetProperty("ActiveChannel", (bool)!PVRChannelsRadio[i].IsHidden());
-      channel->SetProperty("Name", PVRChannelsRadio[i].Name());
-      channel->SetProperty("UseEPG", PVRChannelsRadio[i].GrabEpg());
-      channel->SetProperty("GroupId", (int)PVRChannelsRadio[i].GroupID());
-      channel->SetProperty("Icon", PVRChannelsRadio[i].Icon());
+      CFileItemPtr channel(new CFileItem(*PVRChannelsRadio[i]));
+      channel->SetProperty("ActiveChannel", !PVRChannelsRadio[i]->IsHidden());
+      channel->SetProperty("Name", PVRChannelsRadio[i]->ChannelName());
+      channel->SetProperty("UseEPG", PVRChannelsRadio[i]->EPGEnabled());
+      channel->SetProperty("GroupId", (int)PVRChannelsRadio[i]->GroupID());
+      channel->SetProperty("Icon", PVRChannelsRadio[i]->IconPath());
       channel->SetProperty("EPGSource", (int)0);
-      CStdString number; number.Format("%i", PVRChannelsRadio[i].Number());
+      CStdString number; number.Format("%i", PVRChannelsRadio[i]->ChannelNumber());
       channel->SetProperty("Number", number);
 
-      if (PVRChannelsRadio[i].IsVirtual())
+      if (PVRChannelsRadio[i]->IsVirtual())
       {
         channel->SetProperty("Virtual", true);
-        channel->SetProperty("StreamURL", PVRChannelsRadio[i].StreamURL());
+        channel->SetProperty("StreamURL", PVRChannelsRadio[i]->StreamURL());
       }
 
       CStdString clientName;
-      if (PVRChannelsRadio[i].ClientID() == 999) /* XBMC internal */
+      if (PVRChannelsRadio[i]->ClientID() == 999) /* XBMC internal */
         clientName = g_localizeStrings.Get(19209);
       else
-        clientName = g_PVRManager.Clients()->find(PVRChannelsRadio[i].ClientID())->second->GetBackendName() + ":" + g_PVRManager.Clients()->find(PVRChannelsRadio[i].ClientID())->second->GetConnectionString();
+        clientName = g_PVRManager.Clients()->find(PVRChannelsRadio[i]->ClientID())->second->GetBackendName() + ":" + g_PVRManager.Clients()->find(PVRChannelsRadio[i]->ClientID())->second->GetConnectionString();
       channel->SetProperty("ClientName", clientName);
 
       m_channelItems->Add(channel);
@@ -804,14 +807,14 @@ void CGUIDialogPVRChannelManager::SaveList()
   for (int i = 0; i < m_channelItems->Size(); i++)
   {
     CFileItemPtr pItem = m_channelItems->Get(i);
-    cPVRChannelInfoTag *tag = pItem->GetPVRChannelInfoTag();
+    CPVRChannel *tag = pItem->GetPVRChannelInfoTag();
     if (!pItem->GetPropertyBOOL("ActiveChannel"))
-      tag->SetNumber(1+activeChannels++);
+      tag->SetChannelNumber(1+activeChannels++);
     else
-      tag->SetNumber(atoi(pItem->GetProperty("Number")));
-    tag->SetName(pItem->GetProperty("Name"));
+      tag->SetChannelNumber(atoi(pItem->GetProperty("Number")));
+    tag->SetChannelName(pItem->GetProperty("Name"));
     tag->SetHidden(!pItem->GetPropertyBOOL("ActiveChannel"));
-    tag->SetIcon(pItem->GetProperty("Icon"));
+    tag->SetIconPath(pItem->GetProperty("Icon"));
     tag->SetGroupID(pItem->GetPropertyInt("GroupId"));
 
     if (pItem->GetPropertyBOOL("Virtual"))
@@ -819,17 +822,16 @@ void CGUIDialogPVRChannelManager::SaveList()
       tag->SetStreamURL(pItem->GetProperty("StreamURL"));
     }
 
-    CStdString prevEPGSource = tag->Grabber();
+    CStdString prevEPGSource = tag->EPGScraper();
     int epgSource = pItem->GetPropertyInt("EPGSource");
     if (epgSource == 0)
-      tag->SetGrabber("client");
+      tag->SetEPGScraper("client");
 
-    if ((tag->GrabEpg() && !pItem->GetPropertyBOOL("UseEPG")) || prevEPGSource != tag->Grabber())
+    if ((tag->EPGEnabled() && !pItem->GetPropertyBOOL("UseEPG")) || prevEPGSource != tag->EPGScraper())
     {
-      database->EraseChannelEPG(tag->ChannelID());
-      PVREpgs.ClearChannel(tag->ChannelID());
+      ((CPVREpg *)tag->GetEPG())->Clear();
     }
-    tag->SetGrabEpg(pItem->GetPropertyBOOL("UseEPG"));
+    tag->SetEPGEnabled(pItem->GetPropertyBOOL("UseEPG"));
 
     database->UpdateDBChannel(*tag);
     pItem->SetProperty("Changed", false);
@@ -837,16 +839,12 @@ void CGUIDialogPVRChannelManager::SaveList()
   }
 
   database->Close();
+
   if (!m_bIsRadio)
-  {
-    PVRChannelsTV.Unload();
-    PVRChannelsTV.Load(false);
-  }
+    PVRChannelsTV.Load();
   else
-  {
-    PVRChannelsRadio.Unload();
-    PVRChannelsRadio.Load(true);
-  }
+    PVRChannelsRadio.Load();
+
   m_bContainsChanges = false;
   pDlgProgress->Close();
 }

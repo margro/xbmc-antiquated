@@ -24,9 +24,11 @@
 #include "GUIWindowManager.h"
 #include "GUIDialogOK.h"
 #include "GUIDialogYesNo.h"
-#include "utils/PVREpg.h"
-#include "utils/PVRChannels.h"
-#include "utils/PVRTimers.h"
+
+#include "pvr/PVRChannels.h"
+#include "pvr/PVREpgInfoTag.h"
+#include "pvr/PVRTimers.h"
+#include "pvr/PVRTimerInfoTag.h"
 
 using namespace std;
 
@@ -64,7 +66,7 @@ bool CGUIDialogPVRGuideInfo::OnMessage(CGUIMessage& message)
       }
       else if (iControl == CONTROL_BTN_RECORD)
       {
-        if (m_progItem->GetEPGInfoTag()->ChannelNumber() > 0)
+        if (m_progItem->GetEPGInfoTag()->ChannelTag()->ChannelNumber() > 0)
         {
           if (m_progItem->GetEPGInfoTag()->Timer() == NULL)
           {
@@ -81,9 +83,9 @@ bool CGUIDialogPVRGuideInfo::OnMessage(CGUIMessage& message)
 
               if (pDialog->IsConfirmed())
               {
-                cPVRTimerInfoTag newtimer(*m_progItem.get());
-                CFileItem *item = new CFileItem(newtimer);
-                cPVRTimers::AddTimer(*item);
+                CPVRTimerInfoTag *newtimer = CPVRTimerInfoTag::CreateFromEpg(*m_progItem->GetEPGInfoTag());
+                CFileItem *item = new CFileItem(*newtimer);
+                CPVRTimers::AddTimer(*item);
               }
             }
           }
@@ -99,13 +101,13 @@ bool CGUIDialogPVRGuideInfo::OnMessage(CGUIMessage& message)
       {
         Close();
 
-        cPVRChannels *channels;
-        if (!m_progItem->GetEPGInfoTag()->IsRadio())
+        CPVRChannels *channels;
+        if (!m_progItem->GetEPGInfoTag()->ChannelTag()->IsRadio())
           channels = &PVRChannelsTV;
         else
           channels = &PVRChannelsRadio;
 
-        if (!g_application.PlayFile(CFileItem(channels->at(m_progItem->GetEPGInfoTag()->ChannelNumber()-1))))
+        if (!g_application.PlayFile(CFileItem(*channels->at(m_progItem->GetEPGInfoTag()->ChannelTag()->ChannelNumber()-1))))
         {
           CGUIDialogOK::ShowAndGetInput(19033,0,19035,0);
           return false;
@@ -131,7 +133,7 @@ CFileItemPtr CGUIDialogPVRGuideInfo::GetCurrentListItem(int offset)
 void CGUIDialogPVRGuideInfo::Update()
 {
   // set recording button label
-  cPVREPGInfoTag* tag = m_progItem->GetEPGInfoTag();
+  CPVREpgInfoTag* tag = m_progItem->GetEPGInfoTag();
   if (tag->End() > CDateTime::GetCurrentDateTime())
   {
     if (tag->Timer() == NULL)
