@@ -783,7 +783,8 @@ bool CPVRClient::OpenLiveStream(const CPVRChannel &channelinfo)
 
       //Workaround: tag.name is set in WriteClientChannelInfo, but corrupt after returning using VC++ (out of scope)
       //The code needs refactoring to solve this problem in a good way.
-      tag.name = channelinfo.Name().c_str();
+      tag.name = channelinfo.ChannelName().c_str();
+      tag.callsign = channelinfo.ClientChannelName().c_str();
 
       return m_pStruct->OpenLiveStream(tag);
     }
