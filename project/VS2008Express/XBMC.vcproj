@@ -3085,6 +3085,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\xbmc\utils\Observer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\xbmc\utils\Observer.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\xbmc\PartyModeManager.cpp"
 					>
 				</File>
@@ -3397,11 +3405,11 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\xbmc\TVDatabase.cpp"
+					RelativePath="..\..\xbmc\pvr\TVDatabase.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\xbmc\TVDatabase.h"
+					RelativePath="..\..\xbmc\pvr\TVDatabase.h"
 					>
 				</File>
 				<File
@@ -5669,11 +5677,35 @@
 				Name="PVR"
 				>
 				<File
-					RelativePath="..\..\xbmc\utils\PVRChannels.cpp"
+					RelativePath="..\..\xbmc\pvr\PVRChannel.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\xbmc\utils\PVRChannels.h"
+					RelativePath="..\..\xbmc\pvr\PVRChannel.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\xbmc\pvr\PVRChannelGroup.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\xbmc\pvr\PVRChannelGroup.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\xbmc\pvr\PVRChannelGroups.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\xbmc\pvr\PVRChannelGroups.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\xbmc\pvr\PVRChannels.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\xbmc\pvr\PVRChannels.h"
 					>
 				</File>
 				<File
@@ -5685,35 +5717,67 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\xbmc\utils\PVREpgs.cpp"
+					RelativePath="..\..\xbmc\pvr\PVREpg.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\xbmc\utils\PVREpgs.h"
+					RelativePath="..\..\xbmc\pvr\PVREpg.h"
 					>
 				</File>
 				<File
-					RelativePath="..\..\xbmc\PVRManager.cpp"
+					RelativePath="..\..\xbmc\pvr\PVREpgInfoTag.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\xbmc\PVRManager.h"
+					RelativePath="..\..\xbmc\pvr\PVREpgInfoTag.h"
 					>
 				</File>
 				<File
-					RelativePath="..\..\xbmc\utils\PVRRecordings.cpp"
+					RelativePath="..\..\xbmc\pvr\PVREpgs.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\xbmc\utils\PVRRecordings.h"
+					RelativePath="..\..\xbmc\pvr\PVREpgs.h"
 					>
 				</File>
 				<File
-					RelativePath="..\..\xbmc\utils\PVRTimers.cpp"
+					RelativePath="..\..\xbmc\pvr\PVREpgSearchFilter.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\xbmc\utils\PVRTimers.h"
+					RelativePath="..\..\xbmc\pvr\PVREpgSearchFilter.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\xbmc\pvr\PVRManager.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\xbmc\pvr\PVRManager.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\xbmc\pvr\PVRRecordings.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\xbmc\pvr\PVRRecordings.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\xbmc\pvr\PVRTimerInfoTag.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\xbmc\pvr\PVRTimerInfoTag.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\xbmc\pvr\PVRTimers.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\xbmc\pvr\PVRTimers.h"
 					>
 				</File>
 			</Filter>
