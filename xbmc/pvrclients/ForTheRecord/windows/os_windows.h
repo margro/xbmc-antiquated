@@ -34,6 +34,10 @@ typedef HANDLE wait_event_t;
 typedef CRITICAL_SECTION criticalsection_t;
 typedef unsigned __int32 uint;
 
+#ifndef va_copy
+#define va_copy(x, y) x = y
+#endif
+
 #define snprintf _snprintf
 
 #define PATH_SEPARATOR_CHAR '\\'
