@@ -1267,3 +1267,7 @@ config.log
 /xbmc/pvrclients/MediaPortal/project/VS2008Express/Release-tsreader
 /xbmc/pvrclients/vdr-streamdev/project/VS2008Express/Release
 /xbmc/pvrclients/vdr-streamdev/project/VS2008Express/Debug
+/xbmc/pvrclients/ForTheRecord/lib/libcurld.lib
+/xbmc/pvrclients/ForTheRecord/lib/libcurld.dll
+/xbmc/pvrclients/ForTheRecord/lib/curl-7.21.2/lib/Debug
+/addons/pvr.fortherecord.argus/libcurld.dll
