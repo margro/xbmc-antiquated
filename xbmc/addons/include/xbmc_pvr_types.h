@@ -261,6 +261,8 @@ extern "C" {
     int           lifetime;
     int           repeat;
     int           repeatflags;
+    int           marginstart;
+    int           marginstop;
   } ATTRIBUTE_PACKED PVR_TIMERINFO;
 
   /*! \brief PVR recording defination

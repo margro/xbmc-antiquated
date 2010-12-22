@@ -1171,6 +1171,8 @@ PVR_ERROR CVTPTransceiver::RequestTimerList(PVRHANDLE handle)
     tag.lifetime    = timer.Lifetime();
     tag.repeat      = timer.WeekDays() == 0 ? false : true;
     tag.repeatflags = timer.WeekDays();
+    tag.marginstart = 0;
+    tag.marginstop  = 0;
 
     PVR->TransferTimerEntry(handle, &tag);
   }
@@ -1214,6 +1216,8 @@ PVR_ERROR CVTPTransceiver::GetTimerInfo(unsigned int timernumber, PVR_TIMERINFO 
   tag.lifetime    = timer.Lifetime();
   tag.repeat      = timer.WeekDays() == 0 ? false : true;
   tag.repeatflags = timer.WeekDays();
+  tag.marginstart = 0;
+  tag.marginstop  = 0;
 
   return PVR_ERROR_NO_ERROR;
 }

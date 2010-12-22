@@ -50,6 +50,8 @@ CPVRTimerInfoTag::CPVRTimerInfoTag()
   m_iLifetime          = -1;
   m_EpgInfo            = NULL;
   m_strFileNameAndPath = "";
+  m_iMarginStart       = 0;
+  m_iMarginStop        = 0;
 }
 
 bool CPVRTimerInfoTag::operator ==(const CPVRTimerInfoTag& right) const
@@ -72,7 +74,9 @@ bool CPVRTimerInfoTag::operator ==(const CPVRTimerInfoTag& right) const
           m_iLifetime          == right.m_iLifetime &&
           m_strFileNameAndPath == right.m_strFileNameAndPath &&
           m_strTitle           == right.m_strTitle &&
-          m_iClientID          == right.m_iClientID);
+          m_iClientID          == right.m_iClientID &&
+          m_iMarginStart       == right.m_iMarginStart &&
+          m_iMarginStop        == right.m_iMarginStop);
 }
 
 /**
@@ -469,6 +473,8 @@ CPVRTimerInfoTag *CPVRTimerInfoTag::CreateFromEpg(const CPVREpgInfoTag &tag)
   newTag->m_StopTime       = tag.End() + CDateTimeSpan(0, iMarginStop / 60, iMarginStop % 60, 0);
   newTag->m_iPriority      = iPriority;
   newTag->m_iLifetime      = iLifetime;
+  newTag->m_iMarginStart   = iMarginStart;
+  newTag->m_iMarginStop    = iMarginStop;
 
   /* generate summary string */
   newTag->m_strSummary.Format("%s %s %s %s %s",

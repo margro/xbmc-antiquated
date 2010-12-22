@@ -378,6 +378,8 @@ PVR_ERROR cHTSPData::RequestTimerList(PVRHANDLE handle)
     tag.lifetime    = tag.endtime - tag.starttime;
     tag.repeat      = false;
     tag.repeatflags = 0;
+    tag.marginstart = 0;
+    tag.marginstop  = 0;
 
     PVR->TransferTimerEntry(handle, &tag);
   }

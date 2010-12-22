@@ -83,6 +83,8 @@ private:
   CDateTime       m_FirstDay;           /* if it is a repeating timer the first date it starts */
   int             m_iWeekdays;          /* bit based store of weekdays to repeat */
   CStdString      m_strFileNameAndPath; /* filename is only for reference */
+  int             m_iMarginStart;       /* The start margin (start recording xx min earlier than m_StartTime) */
+  int             m_iMarginStop;        /* The end margin (stop recording xx min later than m_EndTime) */
 
   const CPVREpgInfoTag *m_EpgInfo;
 
@@ -165,6 +167,12 @@ public:
 
   const CPVREpgInfoTag *EpgInfoTag() const { return m_EpgInfo;}
   void SetEpgInfoTag(const CPVREpgInfoTag *tag);
+
+  int MarginStart(void) const { return m_iMarginStart; };
+  void SetMarginStart(int preRecordInterval) { m_iMarginStart = preRecordInterval; }
+
+  int MarginStop(void) const { return m_iMarginStop; };
+  void SetMarginStop(int postRecordInterval) { m_iMarginStop = postRecordInterval; }
 
   /* Channel related Info data */
   int ChannelNumber(void) const;
