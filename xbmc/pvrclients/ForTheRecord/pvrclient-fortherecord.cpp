@@ -182,6 +182,7 @@ PVR_ERROR cPVRClientForTheRecord::RequestEPGForChannel(const PVR_CHANNEL &channe
             proginfo.endtime         = epg.EndTime();
             proginfo.genre_type      = 0;
             proginfo.genre_sub_type  = 0;
+            proginfo.genre_text      = "";
             proginfo.parental_rating = 0;
             PVR->TransferEpgEntry(handle, &proginfo);
           }

@@ -239,7 +239,7 @@ bool CPVREpg::UpdateEntry(const PVR_PROGINFO *data, bool bUpdateDatabase /* = fa
   InfoTag->SetTitle(data->title);
   InfoTag->SetPlotOutline(data->subtitle);
   InfoTag->SetPlot(data->description);
-  InfoTag->SetGenre(data->genre_type, data->genre_sub_type);
+  InfoTag->SetGenre(data->genre_type, data->genre_sub_type, data->genre_text);
   InfoTag->SetParentalRating(data->parental_rating);
   InfoTag->SetIcon(m_Channel->IconPath());
 

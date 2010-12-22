@@ -66,7 +66,7 @@ bool CTVDatabase::CreateTables()
 
     CLog::Log(LOGINFO, "TV-Database: Creating GuideData table");
     m_pDS->exec("CREATE TABLE GuideData (idDatabaseBroadcast integer primary key, idUniqueBroadcast integer, idChannel integer, StartTime datetime, "
-                "EndTime datetime, strTitle text, strPlotOutline text, strPlot text, GenreType integer, GenreSubType integer, "
+                "EndTime datetime, strTitle text, strPlotOutline text, strPlot text, GenreType integer, GenreSubType integer, Genre text, "
                 "firstAired datetime, parentalRating integer, starRating integer, notify integer, seriesNum text, "
                 "episodeNum text, episodePart text, episodeName text)\n");
     m_pDS->exec("CREATE UNIQUE INDEX ix_GuideData on GuideData(idChannel, StartTime desc)\n"); /// pointless?
@@ -423,12 +423,12 @@ long CTVDatabase::AddEPGEntry(const CPVREpgInfoTag &info, bool oneWrite, bool fi
     if (info.UniqueBroadcastID() > 0)
     {
       CStdString SQL = FormatSQL("INSERT INTO GuideData (idDatabaseBroadcast, idChannel, StartTime, "
-                                 "EndTime, strTitle, strPlotOutline, strPlot, GenreType, GenreSubType, "
+                                 "EndTime, strTitle, strPlotOutline, strPlot, GenreType, GenreSubType, Genre, "
                                  "firstAired, parentalRating, starRating, notify, seriesNum, "
                                  "episodeNum, episodePart, episodeName, idUniqueBroadcast) "
-                                 "VALUES (NULL,'%i','%s','%s','%s','%s','%s','%i','%i','%s','%i','%i','%i','%s','%s','%s','%s','%i')\n",
+                                 "VALUES (NULL,'%i','%s','%s','%s','%s','%s','%i','%i','%s','%s','%i','%i','%i','%s','%s','%s','%s','%i')\n",
                                  info.ChannelTag()->ChannelID(), info.Start().GetAsDBDateTime().c_str(), info.End().GetAsDBDateTime().c_str(),
-                                 info.Title().c_str(), info.PlotOutline().c_str(), info.Plot().c_str(), info.GenreType(), info.GenreSubType(),
+                                 info.Title().c_str(), info.PlotOutline().c_str(), info.Plot().c_str(), info.GenreType(), info.GenreSubType(), info.Genre().c_str(),
                                  info.FirstAired().GetAsDBDateTime().c_str(), info.ParentalRating(), info.StarRating(), info.Notify(),
                                  info.SeriesNum().c_str(), info.EpisodeNum().c_str(), info.EpisodePart().c_str(), info.EpisodeName().c_str(),
                                  info.UniqueBroadcastID());
@@ -479,11 +479,11 @@ bool CTVDatabase::UpdateEPGEntry(const CPVREpgInfoTag &info, bool oneWrite, bool
         m_pDS->close();
         // update the item
         SQL = FormatSQL("update GuideData set idChannel=%i, StartTime='%s', EndTime='%s', strTitle='%s', strPlotOutline='%s', "
-                        "strPlot='%s', GenreType=%i, GenreSubType=%i, firstAired='%s', parentalRating=%i, starRating=%i, "
+                        "strPlot='%s', GenreType=%i, GenreSubType=%i, Genre='%s', firstAired='%s', parentalRating=%i, starRating=%i, "
                         "notify=%i, seriesNum='%s', episodeNum='%s', episodePart='%s', episodeName='%s', "
                         "idUniqueBroadcast=%i WHERE idDatabaseBroadcast=%i",
                         info.ChannelTag()->ChannelID(), info.Start().GetAsDBDateTime().c_str(), info.End().GetAsDBDateTime().c_str(),
-                        info.Title().c_str(), info.PlotOutline().c_str(), info.Plot().c_str(), info.GenreType(), info.GenreSubType(),
+                        info.Title().c_str(), info.PlotOutline().c_str(), info.Plot().c_str(), info.GenreType(), info.GenreSubType(), info.Genre().c_str(),
                         info.FirstAired().GetAsDBDateTime().c_str(), info.ParentalRating(), info.StarRating(), info.Notify(),
                         info.SeriesNum().c_str(), info.EpisodeNum().c_str(), info.EpisodePart().c_str(), info.EpisodeName().c_str(),
                         info.UniqueBroadcastID(), id);
@@ -502,9 +502,9 @@ bool CTVDatabase::UpdateEPGEntry(const CPVREpgInfoTag &info, bool oneWrite, bool
                         "EndTime, strTitle, strPlotOutline, strPlot, GenreType, GenreSubType, "
                         "firstAired, parentalRating, starRating, notify, seriesNum, "
                         "episodeNum, episodePart, episodeName, idUniqueBroadcast) "
-                        "values (NULL,'%i','%s','%s','%s','%s','%s','%i','%i','%s','%i','%i','%i','%s','%s','%s','%s','%i')\n",
+                        "values (NULL,'%i','%s','%s','%s','%s','%s','%i','%i','%s','%s','%i','%i','%i','%s','%s','%s','%s','%i')\n",
                         info.ChannelTag()->ChannelID(), info.Start().GetAsDBDateTime().c_str(), info.End().GetAsDBDateTime().c_str(),
-                        info.Title().c_str(), info.PlotOutline().c_str(), info.Plot().c_str(), info.GenreType(), info.GenreSubType(),
+                        info.Title().c_str(), info.PlotOutline().c_str(), info.Plot().c_str(), info.GenreType(), info.GenreSubType(), info.Genre().c_str(),
                         info.FirstAired().GetAsDBDateTime().c_str(), info.ParentalRating(), info.StarRating(), info.Notify(),
                         info.SeriesNum().c_str(), info.EpisodeNum().c_str(), info.EpisodePart().c_str(), info.EpisodeName().c_str(),
                         info.UniqueBroadcastID());
@@ -623,6 +623,7 @@ bool CTVDatabase::GetEPGForChannel(CPVREpg *epg, const CDateTime &start, const C
       broadcast.description     = m_pDS->fv("strPlot").get_asString().c_str();
       broadcast.genre_type      = m_pDS->fv("GenreType").get_asInt();
       broadcast.genre_sub_type  = m_pDS->fv("GenreSubType").get_asInt();
+      broadcast.genre_text      = m_pDS->fv("Genre").get_asString().c_str();
       broadcast.parental_rating = m_pDS->fv("parentalRating").get_asInt();
       startTime.SetFromDBDateTime(m_pDS->fv("StartTime").get_asString());
       endTime.SetFromDBDateTime(m_pDS->fv("EndTime").get_asString());

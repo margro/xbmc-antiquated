@@ -88,11 +88,16 @@ int CPVREpgInfoTag::GetDuration() const
   return end - start > 0 ? end - start : 3600;
 }
 
-void CPVREpgInfoTag::SetGenre(int ID, int subID)
+void CPVREpgInfoTag::SetGenre(int ID, int subID, const char* strGenre)
 {
   m_iGenreType    = ID;
   m_iGenreSubType = subID;
-  m_strGenre      = ConvertGenreIdToString(ID, subID);
+  if ((strGenre) && (strlen(strGenre) > 0))
+  {
+    m_strGenre = strGenre;
+  } else {
+    m_strGenre = ConvertGenreIdToString(ID, subID);
+  }
 }
 
 const CPVREpgInfoTag *CPVREpgInfoTag::GetNextEvent() const

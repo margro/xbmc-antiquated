@@ -361,6 +361,7 @@ bool cVNSIData::GetEPGForChannel(PVRHANDLE handle, const PVR_CHANNEL &channel, t
     uint32_t content    = vresp->extract_U32();
     tag.genre_type      = content & 0xF0;
     tag.genre_sub_type  = content & 0x0F;
+    tag.genre_text      = "";
     tag.parental_rating = vresp->extract_U32();
     tag.title           = vresp->extract_String();
     tag.subtitle        = vresp->extract_String();

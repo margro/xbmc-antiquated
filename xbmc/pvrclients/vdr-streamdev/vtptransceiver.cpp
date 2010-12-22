@@ -823,6 +823,7 @@ PVR_ERROR CVTPTransceiver::RequestEPGForChannel(const PVR_CHANNEL &channel, PVRH
       broadcast.endtime         = epg.EndTime();
       broadcast.genre_type      = epg.GenreType();
       broadcast.genre_sub_type  = epg.GenreSubType();
+      broadcast.genre_text      = "";
       broadcast.parental_rating = epg.ParentalRating();
       PVR->TransferEpgEntry(handle, &broadcast);
       epg.Reset();

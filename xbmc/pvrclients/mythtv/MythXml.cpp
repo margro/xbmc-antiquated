@@ -131,6 +131,7 @@ PVR_ERROR MythXml::requestEPGForChannel(PVRHANDLE handle, const PVR_CHANNEL &cha
 	  guideItem.description     = epg.description;
 	  guideItem.genre_type      = epg.genre_type;
 	  guideItem.genre_sub_type  = epg.genre_subtype;
+	  guideItem.genre_text      = "";
 	  guideItem.parental_rating = epg.parental_rating;
 	  guideItem.starttime       = itemStart;
 	  guideItem.endtime         = itemEnd;

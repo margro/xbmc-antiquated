@@ -87,7 +87,7 @@ public:
   int GenreType(void) const { return m_iGenreType; }
   int GenreSubType(void) const { return m_iGenreSubType; }
   CStdString Genre(void) const { return m_strGenre; }
-  void SetGenre(int ID, int subID);
+  void SetGenre(int ID, int subID, const char* strGenre);
 
   CDateTime FirstAired(void) const { return m_strFirstAired; }
   void SetFirstAired(CDateTime FirstAired) { m_strFirstAired = FirstAired; }

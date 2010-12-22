@@ -417,6 +417,7 @@ PVR_ERROR cPVRClientMediaPortal::RequestEPGForChannel(const PVR_CHANNEL &channel
           broadcast.endtime         = epg.EndTime();
           broadcast.genre_type      = epg.GenreType();
           broadcast.genre_sub_type  = epg.GenreSubType();
+          broadcast.genre_text      = epg.Genre();
           broadcast.parental_rating = 0;
           PVR->TransferEpgEntry(handle, &broadcast);
         }
