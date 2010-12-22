@@ -406,6 +406,8 @@ PVR_ERROR cPVRClientMediaPortal::RequestEPGForChannel(const PVR_CHANNEL &channel
   {
     Tokenize(result, lines, ",");
 
+    XBMC->Log(LOG_DEBUG, "Found %i EPG items for channel %i\n", lines.size(), channel.number);
+
     for (vector<string>::iterator it = lines.begin(); it < lines.end(); it++)
     {
       string& data(*it);
