@@ -294,10 +294,24 @@ const char* cPVRClientMediaPortal::GetConnectionString()
 
 PVR_ERROR cPVRClientMediaPortal::GetDriveSpace(long long *total, long long *used)
 {
-  XBMC->Log(LOG_DEBUG, "->GetDriveSpace(): Todo implement me...");
+  string result;
+  vector<string> fields;
 
   *total = 0;
   *used = 0;
+
+  if (!IsUp())
+    return PVR_ERROR_SERVER_ERROR;
+
+  if ( g_iTVServerXBMCBuild >= 100)
+  {
+    result = SendCommand("GetDriveSpace:\n");
+
+    Tokenize(result, fields, "|");
+
+    *total = (long long) atoi(fields[0].c_str());
+    *used = (long long) atoi(fields[1].c_str());
+  }
 
   return PVR_ERROR_NO_ERROR;
 }
