@@ -143,7 +143,7 @@ bool cEpg::ParseLine(string& data)
 
     if( epgfields.size() == 5 )
     {
-      XBMC->Log(LOG_DEBUG, "%s: %s", epgfields[0].c_str(), epgfields[2].c_str());
+      //XBMC->Log(LOG_DEBUG, "%s: %s", epgfields[0].c_str(), epgfields[2].c_str());
       // field 0 = start date + time
       // field 1 = end   date + time
       // field 2 = title

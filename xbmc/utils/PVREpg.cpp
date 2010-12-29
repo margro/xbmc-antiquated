@@ -198,11 +198,14 @@ int cPVREPGInfoTag::GetDuration() const
   return end - start;
 }
 
-void cPVREPGInfoTag::SetGenre(int ID, int subID)
+void cPVREPGInfoTag::SetGenre(int ID, int subID, const char* strGenre)
 {
   m_GenreType    = ID;
   m_GenreSubType = subID;
-  m_strGenre     = ConvertGenreIdToString(ID, subID);
+  if (strGenre && strlen(strGenre) > 0)
+    m_strGenre     = strGenre;
+  else
+    m_strGenre     = ConvertGenreIdToString(ID, subID);
 }
 
 CStdString cPVREPGInfoTag::ConvertGenreIdToString(int ID, int subID) const
@@ -479,7 +482,7 @@ bool cPVREpg::Add(const PVR_PROGINFO *data, cPVREpg *Epg)
       InfoTag->SetTitle(data->title);
       InfoTag->SetPlotOutline(data->subtitle);
       InfoTag->SetPlot(data->description);
-      InfoTag->SetGenre(data->genre_type, data->genre_sub_type);
+      InfoTag->SetGenre(data->genre_type, data->genre_sub_type, data->genre_text);
       InfoTag->SetParentalRating(data->parental_rating);
       InfoTag->SetIcon(Epg->m_Channel->Icon());
       InfoTag->m_Epg = Epg;
@@ -509,7 +512,7 @@ bool cPVREpg::AddDB(const PVR_PROGINFO *data, cPVREpg *Epg)
     InfoTag.SetTitle(data->title);
     InfoTag.SetPlotOutline(data->subtitle);
     InfoTag.SetPlot(data->description);
-    InfoTag.SetGenre(data->genre_type, data->genre_sub_type);
+    InfoTag.SetGenre(data->genre_type, data->genre_sub_type, data->genre_text);
     InfoTag.SetParentalRating(data->parental_rating);
     InfoTag.SetIcon(Epg->m_Channel->Icon());
     InfoTag.m_Epg = Epg;
@@ -689,7 +692,7 @@ void cPVREpgs::Load()
         {
           // If "ret" is false the database contains no EPG for this channel, load it now from client or over
           // scrapers for only one day to speed up load
-          CDateTime::GetUTCDateTime().GetAsTime(start); // NOTE: Client EPG times are must be UTC based
+          CDateTime::GetUTCDateTime().GetAsTime(start); // NOTE: Client EPG times must be UTC based
           CDateTime::GetUTCDateTime().GetAsTime(end);
           start -= lingertime;
           if (ignoreDB)
