@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".;..\..\;..\..\lib\jsoncpp\include;..\..\libXBMC_pvr;..\..\..\..\addons\include;..\..\..\..\cores\dvdplayer\DVDDemuxers;..\..\..\MediaPortal\tsreader;..\..\..\MediaPortal\windows\libXBMC_addon;..\..\..\MediaPortal\windows\libXBMC_pvr"
+				AdditionalIncludeDirectories="..\..\;..\..\lib\jsoncpp\include;..\..\..\MediaPortal\tsreader;..\..\..\..\..\addons\library.xbmc.addon;..\..\..\..\..\addons\library.xbmc.pvr;..\..\..\..\addons\include"
 				PreprocessorDefinitions="_WIN32;_DEBUG;_WINDOWS;_WIN32PC;_USE_32BIT_TIME_T;TSREADER"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -126,7 +126,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".;..\..\;..\..\lib\jsoncpp\include;..\..\libXBMC_pvr;..\..\..\..\addons\include;..\..\..\..\cores\dvdplayer\DVDDemuxers;..\..\..\MediaPortal\tsreader;..\..\..\MediaPortal\windows\libXBMC_addon;..\..\..\MediaPortal\windows\libXBMC_pvr"
+				AdditionalIncludeDirectories="..\..\;..\..\lib\jsoncpp\include;..\..\..\MediaPortal\tsreader;..\..\..\..\..\addons\library.xbmc.addon;..\..\..\..\..\addons\library.xbmc.pvr;..\..\..\..\addons\include"
 				PreprocessorDefinitions="_WIN32;_WINDOWS;_WIN32PC;_USE_32BIT_TIME_T;TSREADER"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="0"
@@ -199,6 +199,10 @@
 			</File>
 			<File
 				RelativePath="..\..\client.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\..\addons\library.xbmc.addon\dlfcn-win32.cpp"
 				>
 			</File>
 			<File
@@ -288,22 +292,6 @@
 			<Filter
 				Name="windows"
 				>
-				<Filter
-					Name="libXBMC_addon"
-					>
-					<File
-						RelativePath="..\..\..\MediaPortal\windows\libXBMC_addon\libXBMC_addon.cpp"
-						>
-					</File>
-				</Filter>
-				<Filter
-					Name="libXBMC_pvr"
-					>
-					<File
-						RelativePath="..\..\..\MediaPortal\windows\libXBMC_pvr\libXBMC_pvr.cpp"
-						>
-					</File>
-				</Filter>
 			</Filter>
 		</Filter>
 		<Filter
@@ -418,22 +406,6 @@
 					RelativePath="..\..\windows\os_windows.h"
 					>
 				</File>
-				<Filter
-					Name="libXBMC_addon"
-					>
-					<File
-						RelativePath="..\..\..\MediaPortal\windows\libXBMC_addon\libXBMC_addon.h"
-						>
-					</File>
-				</Filter>
-				<Filter
-					Name="libXBMC_pvr"
-					>
-					<File
-						RelativePath="..\..\..\MediaPortal\windows\libXBMC_pvr\libXBMC_pvr.h"
-						>
-					</File>
-				</Filter>
 			</Filter>
 		</Filter>
 	</Files>
