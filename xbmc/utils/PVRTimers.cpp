@@ -214,7 +214,9 @@ cPVRTimerInfoTag::cPVRTimerInfoTag(const CFileItem& item)
 
   /* Calculate start/stop times */
   m_StartTime     = tag->Start() - CDateTimeSpan(0, marginstart / 60, marginstart % 60, 0);
-  m_StopTime      = tag->End()  + CDateTimeSpan(0, marginstop / 60, marginstop % 60, 0);
+  m_StopTime      = tag->End() + CDateTimeSpan(0, marginstop / 60, marginstop % 60, 0);
+  m_MarginStart   = marginstart;
+  m_MarginStop    = marginstop;
 
   /* Set priority and lifetime */
   m_Priority      = defprio;
@@ -254,7 +256,9 @@ bool cPVRTimerInfoTag::operator ==(const cPVRTimerInfoTag& right) const
           m_Lifetime              == right.m_Lifetime &&
           m_strFileNameAndPath    == right.m_strFileNameAndPath &&
           m_strTitle              == right.m_strTitle &&
-          m_clientID              == right.m_clientID);
+          m_clientID              == right.m_clientID &&
+          m_MarginStart           == right.m_MarginStart &&
+          m_MarginStop            == right.m_MarginStop);
 }
 
 /**
@@ -280,7 +284,10 @@ bool cPVRTimerInfoTag::operator !=(const cPVRTimerInfoTag& right) const
           m_Lifetime              != right.m_Lifetime &&
           m_strFileNameAndPath    != right.m_strFileNameAndPath &&
           m_strTitle              != right.m_strTitle &&
-          m_clientID              != right.m_clientID);
+          m_clientID              != right.m_clientID &&
+          m_MarginStart           != right.m_MarginStart &&
+          m_MarginStop            != right.m_MarginStop);
+
 }
 
 time_t cPVRTimerInfoTag::StartTime(void) const
@@ -340,6 +347,9 @@ void cPVRTimerInfoTag::Reset()
 
   m_Priority      = -1;
   m_Lifetime      = -1;
+
+  m_MarginStart   = 0;
+  m_MarginStop    = 0;
 
   m_EpgInfo       = NULL;
 

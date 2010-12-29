@@ -80,8 +80,8 @@ cTimer::cTimer(const PVR_TIMERINFO& timerinfo)
   }
 
 
-  m_prerecordinterval = 0; //timerinfo.marginstart;
-  m_postrecordinterval = 0; //timerinfo.marginstop;
+  m_prerecordinterval = timerinfo.marginstart;
+  m_postrecordinterval = timerinfo.marginstop;
 
   // Correct starttime and stoptime for marginstart and marginstop
   // XBMC's start and stop times include the margins already, but
@@ -128,8 +128,8 @@ void cTimer::GetPVRtimerinfo(PVR_TIMERINFO &tag)
   tag.lifetime    = GetLifetime();
   tag.repeat      = Repeat();
   tag.repeatflags = RepeatFlags();
-  //tag.marginstart = m_prerecordinterval;
-  //tag.marginstop  = m_postrecordinterval;
+  tag.marginstart = m_prerecordinterval;
+  tag.marginstop  = m_postrecordinterval;
 }
 
 time_t cTimer::StartTime(void) const

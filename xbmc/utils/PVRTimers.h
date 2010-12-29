@@ -54,6 +54,8 @@ private:
   CDateTime       m_FirstDay;             /// If it is a repeating timer the first date it starts
   int             m_Weekdays;             /// Bit based store of weekdays to repeat
   CStdString      m_strFileNameAndPath;   /// Filename is only for reference
+  int             m_MarginStart;          /// The start margin (start recording xx min earlier than m_StartTime)
+  int             m_MarginStop;           /// The end margin (stop recording xx min later than m_EndTime)
 
   const cPVREPGInfoTag *m_EpgInfo;
 
@@ -111,6 +113,11 @@ public:
   void SetPath(CStdString path) { m_strFileNameAndPath = path; }
   const cPVREPGInfoTag *Epg() const { return m_EpgInfo;}
   void SetEpg(const cPVREPGInfoTag *tag);
+  int MarginStart(void) const { return m_MarginStart; };
+  void SetMarginStart(int preRecordInterval) { m_MarginStart = preRecordInterval; }
+
+  int MarginStop(void) const { return m_MarginStop; };
+  void SetMarginStop(int postRecordInterval) { m_MarginStop = postRecordInterval; }
 
   /* Channel related Info data */
   unsigned int ChannelNumber(void) const;

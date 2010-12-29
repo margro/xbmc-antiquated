@@ -763,6 +763,8 @@ void CPVRClient::WriteClientTimerInfo(const cPVRTimerInfoTag &timerinfo, PVR_TIM
   tag.endtime      -= m_iTimeCorrection;
   tag.firstday      = timerinfo.FirstDayTime();
   tag.firstday     -= m_iTimeCorrection;
+  tag.marginstart   = timerinfo.MarginStart();
+  tag.marginstop    = timerinfo.MarginStop();
   return;
 }
 

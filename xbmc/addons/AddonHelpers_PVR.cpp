@@ -180,6 +180,8 @@ void CAddonHelpers_PVR::PVRTransferTimerEntry(void *addonData, const PVRHANDLE h
   CStdString path;
   path.Format("pvr://client%i/timers/%i", tag.ClientID(), tag.ClientIndex());
   tag.SetPath(path);
+  tag.SetMarginStart(timer->marginstart);
+  tag.SetMarginStop(timer->marginstop);
 
   CStdString summary;
   if (!tag.IsRepeating())
