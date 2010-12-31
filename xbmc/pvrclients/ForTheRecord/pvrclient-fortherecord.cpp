@@ -277,7 +277,7 @@ PVR_ERROR cPVRClientForTheRecord::RequestChannelList(PVRHANDLE handle, int radio
     else
     {
       XBMC->Log(LOG_DEBUG, "Unknown response format. Expected Json::arrayValue\n");
-      return PVR_ERROR_UNKOWN;
+      return PVR_ERROR_UNKNOWN;
     }
   }
   else
