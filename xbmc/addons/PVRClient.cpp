@@ -178,7 +178,7 @@ PVR_ERROR CPVRClient::GetProperties(PVR_SERVERPROPS *props)
     props->SupportBouquets           = false;
     props->SupportChannelScan        = false;
   }
-  return PVR_ERROR_UNKOWN;
+  return PVR_ERROR_UNKNOWN;
 }
 
 
@@ -326,7 +326,7 @@ PVR_ERROR CPVRClient::GetEPGForChannel(const CPVRChannel &channelinfo, CPVREpg *
 {
   CSingleLock lock(m_critSection);
 
-  PVR_ERROR ret = PVR_ERROR_UNKOWN;
+  PVR_ERROR ret = PVR_ERROR_UNKNOWN;
 
   if (m_ReadyToUse)
   {
@@ -387,7 +387,7 @@ PVR_ERROR CPVRClient::GetChannelList(CPVRChannels &channels, bool radio)
 {
   CSingleLock lock(m_critSection);
 
-  PVR_ERROR ret = PVR_ERROR_UNKOWN;
+  PVR_ERROR ret = PVR_ERROR_UNKNOWN;
 
   if (m_ReadyToUse)
   {
@@ -440,7 +440,7 @@ PVR_ERROR CPVRClient::GetAllRecordings(CPVRRecordings *results)
 {
   CSingleLock lock(m_critSection);
 
-  PVR_ERROR ret = PVR_ERROR_UNKOWN;
+  PVR_ERROR ret = PVR_ERROR_UNKNOWN;
 
   if (m_ReadyToUse)
   {
@@ -471,7 +471,7 @@ PVR_ERROR CPVRClient::DeleteRecording(const CPVRRecordingInfoTag &recinfo)
 {
   CSingleLock lock(m_critSection);
 
-  PVR_ERROR ret = PVR_ERROR_UNKOWN;
+  PVR_ERROR ret = PVR_ERROR_UNKNOWN;
 
   if (m_ReadyToUse)
   {
@@ -502,7 +502,7 @@ PVR_ERROR CPVRClient::RenameRecording(const CPVRRecordingInfoTag &recinfo, CStdS
 {
   CSingleLock lock(m_critSection);
 
-  PVR_ERROR ret = PVR_ERROR_UNKOWN;
+  PVR_ERROR ret = PVR_ERROR_UNKNOWN;
 
   if (m_ReadyToUse)
   {
@@ -574,7 +574,7 @@ PVR_ERROR CPVRClient::GetAllTimers(CPVRTimers *results)
 {
   CSingleLock lock(m_critSection);
 
-  PVR_ERROR ret = PVR_ERROR_UNKOWN;
+  PVR_ERROR ret = PVR_ERROR_UNKNOWN;
 
   if (m_ReadyToUse)
   {
@@ -605,7 +605,7 @@ PVR_ERROR CPVRClient::AddTimer(const CPVRTimerInfoTag &timerinfo)
 {
   CSingleLock lock(m_critSection);
 
-  PVR_ERROR ret = PVR_ERROR_UNKOWN;
+  PVR_ERROR ret = PVR_ERROR_UNKNOWN;
 
   if (m_ReadyToUse)
   {
@@ -642,7 +642,7 @@ PVR_ERROR CPVRClient::DeleteTimer(const CPVRTimerInfoTag &timerinfo, bool force)
 {
   CSingleLock lock(m_critSection);
 
-  PVR_ERROR ret = PVR_ERROR_UNKOWN;
+  PVR_ERROR ret = PVR_ERROR_UNKNOWN;
 
   if (m_ReadyToUse)
   {
@@ -677,7 +677,7 @@ PVR_ERROR CPVRClient::RenameTimer(const CPVRTimerInfoTag &timerinfo, const CStdS
 {
   CSingleLock lock(m_critSection);
 
-  PVR_ERROR ret = PVR_ERROR_UNKOWN;
+  PVR_ERROR ret = PVR_ERROR_UNKNOWN;
 
   if (m_ReadyToUse)
   {
@@ -712,7 +712,7 @@ PVR_ERROR CPVRClient::UpdateTimer(const CPVRTimerInfoTag &timerinfo)
 {
   CSingleLock lock(m_critSection);
 
-  PVR_ERROR ret = PVR_ERROR_UNKOWN;
+  PVR_ERROR ret = PVR_ERROR_UNKNOWN;
 //
   if (m_ReadyToUse)
   {
@@ -859,7 +859,7 @@ bool CPVRClient::SignalQuality(PVR_SIGNALQUALITY &qualityinfo)
 
   if (m_ReadyToUse)
   {
-    PVR_ERROR ret = PVR_ERROR_UNKOWN;
+    PVR_ERROR ret = PVR_ERROR_UNKNOWN;
     try
     {
       ret = m_pStruct->SignalQuality(qualityinfo);
@@ -971,7 +971,7 @@ PVR_ERROR CPVRClient::GetStreamProperties(PVR_STREAMPROPS *props)
 
     /* Set all properties in a case of exception to not supported */
   }
-  return PVR_ERROR_UNKOWN;
+  return PVR_ERROR_UNKNOWN;
 }
 
 void CPVRClient::DemuxReset()
