@@ -872,15 +872,15 @@ int CPVRManager::TranslateIntInfo(DWORD dwInfo)
 {
   if (dwInfo == PVR_PLAYING_PROGRESS)
   {
-    return (float)(((float)GetStartTime() / GetTotalTime()) * 100);
+    return (int)(((float)GetStartTime() / GetTotalTime()) * 100);
   }
   else if (dwInfo == PVR_ACTUAL_STREAM_SIG_PROGR)
   {
-    return (float)(((float)m_qualityInfo.signal / 0xFFFF) * 100);
+    return (int)(((float)m_qualityInfo.signal / 0xFFFF) * 100);
   }
   else if (dwInfo == PVR_ACTUAL_STREAM_SNR_PROGR)
   {
-    return (float)(((float)m_qualityInfo.snr / 0xFFFF) * 100);
+    return (int)(((float)m_qualityInfo.snr / 0xFFFF) * 100);
   }
   return 0;
 }
