@@ -3401,15 +3401,15 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\xbmc\pvr\PVRDatabase.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\xbmc\pvr\PVRDatabase.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\xbmc\Song.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\xbmc\pvr\TVDatabase.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\xbmc\pvr\TVDatabase.h"
 					>
 				</File>
 				<File
