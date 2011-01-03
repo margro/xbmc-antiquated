@@ -155,6 +155,7 @@ bool CPVRDatabase::CreateTables()
           "EndTime datetime, "
           "GenreType integer, "
           "GenreSubType integer, "
+          "Genre text, "
           "FirstAired datetime, "
           "ParentalRating integer, "
           "StarRating integer, "
@@ -778,7 +779,8 @@ int CPVRDatabase::GetEpgForChannel(CPVREpg *epg, const CDateTime &start /* = NUL
         newTag.SetStart             (startTime);
         newTag.SetEnd               (endTime);
         newTag.SetGenre             (m_pDS->fv("GenreType").get_asInt(),
-                                     m_pDS->fv("GenreSubType").get_asInt());
+                                     m_pDS->fv("GenreSubType").get_asInt(),
+                                     m_pDS->fv("Genre").get_asString().c_str());
         newTag.SetFirstAired        (firstAired);
         newTag.SetParentalRating    (m_pDS->fv("ParentalRating").get_asInt());
         newTag.SetStarRating        (m_pDS->fv("StarRating").get_asInt());
@@ -896,12 +898,12 @@ bool CPVRDatabase::UpdateEpgEntry(const CPVREpgInfoTag &tag, bool bSingleUpdate 
   if (iBroadcastId < 0)
   {
     strQuery = FormatSQL("INSERT INTO EpgData (ChannelId, StartTime, "
-        "EndTime, Title, PlotOutline, Plot, GenreType, GenreSubType, "
+        "EndTime, Title, PlotOutline, Plot, GenreType, GenreSubType, Genre, "
         "FirstAired, ParentalRating, StarRating, Notify, SeriesId, "
         "EpisodeId, EpisodePart, EpisodeName, BroadcastUid) "
-        "VALUES (%i, '%s', '%s', '%s', '%s', '%s', %i, %i, '%s', %i, %i, %i, '%s', '%s', '%s', '%s', %i)\n",
+        "VALUES (%i, '%s', '%s', '%s', '%s', '%s', %i, %i, '%s', '%s', %i, %i, %i, '%s', '%s', '%s', '%s', %i)\n",
         tag.ChannelTag()->ChannelID(), tag.Start().GetAsDBDateTime().c_str(), tag.End().GetAsDBDateTime().c_str(),
-        tag.Title().c_str(), tag.PlotOutline().c_str(), tag.Plot().c_str(), tag.GenreType(), tag.GenreSubType(),
+        tag.Title().c_str(), tag.PlotOutline().c_str(), tag.Plot().c_str(), tag.GenreType(), tag.GenreSubType(), tag.Genre(),
         tag.FirstAired().GetAsDBDateTime().c_str(), tag.ParentalRating(), tag.StarRating(), tag.Notify(),
         tag.SeriesNum().c_str(), tag.EpisodeNum().c_str(), tag.EpisodePart().c_str(), tag.EpisodeName().c_str(),
         tag.UniqueBroadcastID());
@@ -909,12 +911,12 @@ bool CPVRDatabase::UpdateEpgEntry(const CPVREpgInfoTag &tag, bool bSingleUpdate 
   else
   {
     strQuery = FormatSQL("REPLACE INTO EpgData (ChannelId, StartTime, "
-        "EndTime, Title, PlotOutline, Plot, GenreType, GenreSubType, "
+        "EndTime, Title, PlotOutline, Plot, GenreType, GenreSubType, Genre, "
         "FirstAired, ParentalRating, StarRating, Notify, SeriesId, "
         "EpisodeId, EpisodePart, EpisodeName, BroadcastUid, BroadcastId) "
-        "VALUES (%i, '%s', '%s', '%s', '%s', '%s', %i, %i, '%s', %i, %i, %i, '%s', '%s', '%s', '%s', %i, %i)\n",
+        "VALUES (%i, '%s', '%s', '%s', '%s', '%s', %i, %i, '%s', '%s', %i, %i, %i, '%s', '%s', '%s', '%s', %i, %i)\n",
         tag.ChannelTag()->ChannelID(), tag.Start().GetAsDBDateTime().c_str(), tag.End().GetAsDBDateTime().c_str(),
-        tag.Title().c_str(), tag.PlotOutline().c_str(), tag.Plot().c_str(), tag.GenreType(), tag.GenreSubType(),
+        tag.Title().c_str(), tag.PlotOutline().c_str(), tag.Plot().c_str(), tag.GenreType(), tag.GenreSubType(), tag.Genre(),
         tag.FirstAired().GetAsDBDateTime().c_str(), tag.ParentalRating(), tag.StarRating(), tag.Notify(),
         tag.SeriesNum().c_str(), tag.EpisodeNum().c_str(), tag.EpisodePart().c_str(), tag.EpisodeName().c_str(),
         tag.UniqueBroadcastID(), iBroadcastId);

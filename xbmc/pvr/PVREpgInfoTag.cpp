@@ -222,7 +222,7 @@ void CPVREpgInfoTag::Update(const CPVREpgInfoTag &tag)
   SetPlot(tag.Plot());
   SetStart(tag.Start());
   SetEnd(tag.End());
-  SetGenre(tag.GenreType(), tag.GenreSubType());
+  SetGenre(tag.GenreType(), tag.GenreSubType(), tag.Genre());
   SetFirstAired(tag.FirstAired());
   SetParentalRating(tag.ParentalRating());
   SetStarRating(tag.StarRating());
@@ -239,7 +239,7 @@ void CPVREpgInfoTag::Update(const PVR_PROGINFO *data)
   SetTitle(data->title);
   SetPlotOutline(data->subtitle);
   SetPlot(data->description);
-  SetGenre(data->genre_type, data->genre_sub_type);
+  SetGenre(data->genre_type, data->genre_sub_type, data->genre_text);
   SetParentalRating(data->parental_rating);
 //  SetIcon(m_Channel->IconPath());
 }
