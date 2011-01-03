@@ -22,6 +22,7 @@
  */
 
 #include "PVRChannel.h"
+#include "PVREpgSearchFilter.h"
 #include "../addons/include/xbmc_pvr_types.h"
 
 class CPVREpgInfoTag;
@@ -49,7 +50,7 @@ private:
 
 public:
   CPVREpg(CPVRChannel *channel);
-  ~CPVREpg(void);
+  virtual ~CPVREpg(void);
 
   /**
    * Check if this EPG contains valid entries
@@ -128,15 +129,26 @@ public:
    * Update an entry in this EPG
    * If bUpdateDatabase is set to true, this event will be persisted in the database
    */
+  bool UpdateEntry(const CPVREpgInfoTag &tag, bool bUpdateDatabase = false);
+
+  /**
+   * Update an entry in this EPG
+   * If bUpdateDatabase is set to true, this event will be persisted in the database
+   */
   bool UpdateEntry(const PVR_PROGINFO *data, bool bUpdateDatabase = false);
 
   /**
-   * Remove overlapping events from the tables
+   * Fix overlapping events from the tables
    */
-  bool RemoveOverlappingEvents(void);
+  bool FixOverlappingEvents(bool bStore = true);
 
   /**
    * Update the EPG from 'start' till 'end'
    */
-  bool Update(time_t start, time_t end, bool bLoadFromDb = false, bool bStoreInDb = true);
+  bool Update(time_t start, time_t end, bool bStoreInDb = true);
+
+  bool LoadFromDb();
+
+  int Get(CFileItemList *results);
+  int Get(CFileItemList *results, const PVREpgSearchFilter &filter);
 };

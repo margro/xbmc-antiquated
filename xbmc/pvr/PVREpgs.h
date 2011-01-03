@@ -24,33 +24,42 @@
 #include "DateTime.h"
 #include "Thread.h"
 #include "CriticalSection.h"
+#include "Observer.h"
 #include "../addons/include/xbmc_pvr_types.h"
 #include "utils/Thread.h"
 
 class CPVREpg;
 class CPVREpgInfoTag;
 class CPVRChannel;
-class CTVDatabase;
+class CPVRDatabase;
 class CFileItemList;
 struct PVREpgSearchFilter;
 
 class CPVREpgs : public std::vector<CPVREpg*>,
+                 public Observer,
                  private CThread
 {
   friend class CPVREpg;
 
 private:
-  CCriticalSection m_critSection;
-  bool             m_bInihibitUpdate;    /* prevent the EPG from being updated */
-  bool             m_bIgnoreDbForClient; /* don't save the EPG data in the database */
-  int              m_iLingerTime;        /* hours to keep old EPG data */
-  int              m_iDaysToDisplay;     /* amount of EPG data to maintain */
-  int              m_iUpdateTime;        /* update the full EPG after this period */
-  bool             m_bDatabaseLoaded;    /* true if we already loaded the EPG from the database */
-  CDateTime        m_RadioFirst;         /* the earliest EPG date in our radio channel tables */
-  CDateTime        m_RadioLast;          /* the latest EPG date in our radio channel tables */
-  CDateTime        m_TVFirst;            /* the earliest EPG date in our tv channel tables */
-  CDateTime        m_TVLast;             /* the latest EPG date in our tv channel tables */
+  /* config settings */
+  bool             m_bIgnoreDbForClient;      /* don't save the EPG data in the database */
+  int              m_iLingerTime;             /* hours to keep old EPG data */
+  int              m_iDisplayTime;            /* hours of EPG data to fetch */
+  int              m_iUpdateTime;             /* update the full EPG after this period */
+
+  /* cached data */
+  CDateTime        m_RadioFirst;              /* the earliest EPG date in our radio channel tables */
+  CDateTime        m_RadioLast;               /* the latest EPG date in our radio channel tables */
+  CDateTime        m_TVFirst;                 /* the earliest EPG date in our tv channel tables */
+  CDateTime        m_TVLast;                  /* the latest EPG date in our tv channel tables */
+
+  /* class state properties */
+  bool             m_bDatabaseLoaded;         /* true if we already loaded the EPG from the database */
+  time_t           m_iLastEpgUpdate;          /* the time the EPG was updated */
+  time_t           m_iLastEpgCleanup;         /* the time the EPG was cleaned up */
+  time_t           m_iLastTimerUpdate;        /* the time the timers were updated */
+  time_t           m_iLastPointerUpdate;      /* the time the now playing pointers were updated */
 
   /**
    * Load the EPG for a channel using the pvr client
@@ -77,29 +86,15 @@ private:
    */
   bool RemoveOldEntries();
 
+  /**
+   * Update the last and first EPG date cache
+   */
   void UpdateFirstAndLastEPGDates(const CPVREpgInfoTag &tag);
-
-protected:
-  virtual void Process();
-
-public:
-  CPVREpgs();
-  ~CPVREpgs();
-
-  void Start();
-  void Stop();
-
-  void Clear();
 
   /**
    * Update the EPG pointers for all channels
    */
-  void UpdateAllChannelEPGPointers();
-
-  /**
-   * Clear all EPG entries
-   */
-  bool RemoveAllEntries(bool bShowProgress = false);
+  bool UpdateAllChannelEPGPointers();
 
   /**
    * Loads and updates the EPG data
@@ -107,13 +102,39 @@ public:
   bool UpdateEPG(bool bShowProgress = false);
 
   /**
-   * Prevent the EPG from being updated
+   * Update the timers
    */
-  void InihibitUpdate(bool bSetTo) { m_bInihibitUpdate = bSetTo; }
+  bool UpdateTimers(void);
+
+  /**
+   * Load all EPG entries from the database
+   */
+  bool LoadFromDb(bool bShowProgress = false);
+
+  /**
+   * Clear all EPG entries
+   */
+  void Clear(bool bClearDb = false);
+
+  /**
+   * Create an EPG table for each channel
+   */
+  bool CreateChannelEpgs(void);
+
+protected:
+  virtual void Process();
+
+public:
+  CPVREpgs();
+  virtual ~CPVREpgs();
+
+  void Start();
+  bool Stop();
+  bool Reset(bool bClearDb = false);
+  void Notify(const Observable &obs, const CStdString& msg);
 
   int GetEPGSearch(CFileItemList* results, const PVREpgSearchFilter &filter);
   int GetEPGAll(CFileItemList* results, bool bRadio = false);
-  int GetEPGForChannel(CPVRChannel *channel, CFileItemList *results);
   int GetEPGNow(CFileItemList* results, bool bRadio = false);
   int GetEPGNext(CFileItemList* results, bool bRadio = false);
   CDateTime GetFirstEPGDate(bool bRadio = false);

@@ -923,8 +923,6 @@ void CPVRManager::StartChannelScan()
   CLog::Log(LOGNOTICE,"PVR: Starting to scan for channels on client %s:%s", m_clients[scanningClientID]->GetBackendName().c_str(), m_clients[scanningClientID]->GetConnectionString().c_str());
   long perfCnt = CTimeUtils::GetTimeMS();
 
-  PVREpgs.InihibitUpdate(true);
-
   if (m_currentPlayingRecording || m_currentPlayingChannel)
   {
     CLog::Log(LOGNOTICE,"PVR: Is playing data, stopping playback");
@@ -955,8 +953,6 @@ void CPVRManager::ResetDatabase()
   pDlgProgress->StartModal();
   pDlgProgress->Progress();
 
-  PVREpgs.InihibitUpdate(true);
-
   if (m_currentPlayingRecording || m_currentPlayingChannel)
   {
     CLog::Log(LOGNOTICE,"PVR: Is playing data, stopping playback");
@@ -964,17 +960,18 @@ void CPVRManager::ResetDatabase()
   }
   pDlgProgress->SetPercentage(10);
 
+  PVREpgs.Stop();
   Stop();
   pDlgProgress->SetPercentage(20);
 
   m_database.Open();
-  m_database.EraseEPG();
+  m_database.EraseEpg();
   pDlgProgress->SetPercentage(30);
 
-  m_database.EraseChannelGroups();
+  m_database.EraseChannelGroups(false);
   pDlgProgress->SetPercentage(50);
 
-  m_database.EraseRadioChannelGroups();
+  m_database.EraseChannelGroups(true);
   pDlgProgress->SetPercentage(60);
 
   m_database.EraseChannels();
@@ -989,20 +986,14 @@ void CPVRManager::ResetDatabase()
   m_database.Close();
   CLog::Log(LOGNOTICE,"PVR: TV Database reset finished, starting PVR Subsystem again");
   Start();
+  PVREpgs.Start();
   pDlgProgress->SetPercentage(100);
   pDlgProgress->Close();
 }
 
 void CPVRManager::ResetEPG()
 {
-  CLog::Log(LOGNOTICE,"PVR: EPG is being erased");
-
-  PVREpgs.InihibitUpdate(true);
-  PVREpgs.RemoveAllEntries(true);
-  PVREpgs.InihibitUpdate(false);
-  PVREpgs.UpdateEPG(true);
-
-  CLog::Log(LOGNOTICE,"PVR: EPG reset finished");
+  PVREpgs.Reset(true);
 }
 
 bool CPVRManager::IsPlayingTV()
@@ -1262,7 +1253,7 @@ void CPVRManager::SaveCurrentChannelSettings()
     if (g_settings.m_currentVideoSettings != g_settings.m_defaultVideoSettings)
     {
       m_database.Open();
-      m_database.SetChannelSettings(m_currentPlayingChannel->GetPVRChannelInfoTag()->ChannelID(), g_settings.m_currentVideoSettings);
+      m_database.SetChannelSettings(*m_currentPlayingChannel->GetPVRChannelInfoTag(), g_settings.m_currentVideoSettings);
       m_database.Close();
     }
   }
@@ -1278,7 +1269,7 @@ void CPVRManager::LoadCurrentChannelSettings()
     g_settings.m_currentVideoSettings = g_settings.m_defaultVideoSettings;
 
     m_database.Open();
-    if (m_database.GetChannelSettings(m_currentPlayingChannel->GetPVRChannelInfoTag()->ChannelID(), loadedChannelSettings))
+    if (m_database.GetChannelSettings(*m_currentPlayingChannel->GetPVRChannelInfoTag(), loadedChannelSettings))
     {
       if (loadedChannelSettings.m_AudioDelay != g_settings.m_currentVideoSettings.m_AudioDelay)
       {

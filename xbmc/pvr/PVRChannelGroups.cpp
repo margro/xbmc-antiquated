@@ -33,7 +33,7 @@
 
 #include "PVRChannelGroups.h"
 #include "PVRChannelGroup.h"
-#include "TVDatabase.h"
+#include "PVRDatabase.h"
 #include "PVRManager.h"
 
 using namespace XFILE;
@@ -50,16 +50,12 @@ CPVRChannelGroups::CPVRChannelGroups(void)
 
 bool CPVRChannelGroups::Load(bool radio)
 {
-  CTVDatabase *database = g_PVRManager.GetTVDatabase();
+  CPVRDatabase *database = g_PVRManager.GetTVDatabase();
   database->Open();
 
   m_bRadio = radio;
   Clear();
-  if (!m_bRadio)
-    database->GetChannelGroupList(*this);
-  else
-    database->GetRadioChannelGroupList(*this);
-
+  database->GetChannelGroupList(*this, m_bRadio);
   database->Close();
   return true;
 }
@@ -148,87 +144,50 @@ int CPVRChannelGroups::GetNextGroupID(int current_group_id)
 
 void CPVRChannelGroups::AddGroup(const CStdString &name)
 {
-  CTVDatabase *database = g_PVRManager.GetTVDatabase();
+  CPVRDatabase *database = g_PVRManager.GetTVDatabase();
   database->Open();
 
   Clear();
-  if (!m_bRadio)
-  {
-    database->AddChannelGroup(name, -1);
-    database->GetChannelGroupList(*this);
-  }
-  else
-  {
-    database->AddRadioChannelGroup(name, -1);
-    database->GetRadioChannelGroupList(*this);
-  }
+  database->AddChannelGroup(name, -1, m_bRadio);
+  database->GetChannelGroupList(*this, m_bRadio);
 
   database->Close();
 }
 
 bool CPVRChannelGroups::RenameGroup(int GroupId, const CStdString &newname)
 {
-  CTVDatabase *database = g_PVRManager.GetTVDatabase();
+  CPVRDatabase *database = g_PVRManager.GetTVDatabase();
   database->Open();
 
   Clear();
-  if (!m_bRadio)
-  {
-    database->SetChannelGroupName(GroupId, newname);
-    database->GetChannelGroupList(*this);
-  }
-  else
-  {
-    database->SetRadioChannelGroupName(GroupId, newname);
-    database->GetRadioChannelGroupList(*this);
-  }
-
-  database->Close();
+  database->SetChannelGroupName(GroupId, newname, m_bRadio);
+  database->GetChannelGroupList(*this, m_bRadio);  database->Close();
   return true;
 }
 
 bool CPVRChannelGroups::DeleteGroup(int GroupId)
 {
-  CTVDatabase *database = g_PVRManager.GetTVDatabase();
+  CPVRDatabase *database = g_PVRManager.GetTVDatabase();
   database->Open();
 
   Clear();
 
+  CPVRChannels channels = m_bRadio ? PVRChannelsRadio : PVRChannelsTV;
+
+  /* Delete the group inside Database */
+  database->DeleteChannelGroup(GroupId, m_bRadio);
+
   /* Set all channels with this group to undefined */
-  if (!m_bRadio)
+  for (unsigned int i = 0; i < channels.size(); i++)
   {
-    /* Delete the group inside Database */
-    database->DeleteChannelGroup(GroupId);
-
-    for (unsigned int i = 0; i < PVRChannelsTV.size(); i++)
+    if (channels[i]->GroupID() == GroupId)
     {
-      if (PVRChannelsTV[i]->GroupID() == GroupId)
-      {
-        PVRChannelsTV[i]->SetGroupID(0);
-        database->UpdateDBChannel(*PVRChannelsTV[i]);
-      }
+      channels[i]->SetGroupID(0, true);
     }
-
-    /* Reload the group list */
-    database->GetChannelGroupList(*this);
   }
-  else
-  {
-    /* Delete the group inside Database */
-    database->DeleteRadioChannelGroup(GroupId);
 
-    for (unsigned int i = 0; i < PVRChannelsRadio.size(); i++)
-    {
-      if (PVRChannelsRadio[i]->GroupID() == GroupId)
-      {
-        PVRChannelsRadio[i]->SetGroupID(0);
-        database->UpdateDBChannel(*PVRChannelsRadio[i]);
-      }
-    }
-
-    /* Reload the group list */
-    database->GetRadioChannelGroupList(*this);
-  }
+  /* Reload the group list */
+  database->GetChannelGroupList(*this, m_bRadio);
 
   database->Close();
   return true;
@@ -263,9 +222,6 @@ int CPVRChannelGroups::GetGroupId(CStdString GroupName)
 
 bool CPVRChannelGroups::ChannelToGroup(const CPVRChannel &channel, int GroupId)
 {
-  CTVDatabase *database = g_PVRManager.GetTVDatabase();
-  database->Open();
-
   CPVRChannels *channels;
   if (!channel.IsRadio())
     channels = &PVRChannelsTV;
@@ -273,10 +229,7 @@ bool CPVRChannelGroups::ChannelToGroup(const CPVRChannel &channel, int GroupId)
     channels = &PVRChannelsRadio;
 
   channels->at(channel.ChannelNumber()-1)->SetGroupID(GroupId);
-  database->UpdateDBChannel(*channels->at(channel.ChannelNumber()-1));
-
-  database->Close();
-  return true;
+  return channels->at(channel.ChannelNumber()-1)->Persist();
 }
 
 void CPVRChannelGroups::Clear()
