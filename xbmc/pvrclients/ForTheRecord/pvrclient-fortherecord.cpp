@@ -161,6 +161,7 @@ PVR_ERROR cPVRClientForTheRecord::RequestEPGForChannel(const PVR_CHANNEL &channe
 
     if (retval != E_FAILED)
     {
+      XBMC->Log(LOG_DEBUG, "GetEPGData returned %i, response.type == %i, response.size == %i.", retval, response.type(), response.size());
       if( response.type() == Json::arrayValue)
       {
         int size = response.size();
@@ -190,10 +191,17 @@ PVR_ERROR cPVRClientForTheRecord::RequestEPGForChannel(const PVR_CHANNEL &channe
         }
       }
     }
+    else
+    {
+      XBMC->Log(LOG_ERROR, "GetEPGData failed for channel id:%i", channel.number);
+    }
+  }
+  else
+  {
+    XBMC->Log(LOG_ERROR, "Channel (%i) did not return a channel class.", channel.number);
   }
 
   return PVR_ERROR_NO_ERROR;
-
 }
 
 

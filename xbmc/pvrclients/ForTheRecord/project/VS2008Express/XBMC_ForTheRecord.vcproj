@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="pvrclient_fortherecord"
 	ProjectGUID="{897FF040-CCA8-4573-8785-FB1747BCC8E6}"
 	RootNamespace="XBMC_ForTheRecord"
@@ -149,7 +149,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="libcurl.lib"
 				OutputFile="..\..\..\..\..\addons\pvr.fortherecord.argus\XBMC_ForTheRecord_win32.pvr"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\lib"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="false"
