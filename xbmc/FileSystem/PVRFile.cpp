@@ -271,7 +271,7 @@ CStdString CPVRFile::TranslatePVRFilename(const CStdString& pathFile)
   }
   else if (FileName.substr(0, 16) == "pvr://recordings")
   {
-    cPVRRecordingInfoTag *tag = PVRRecordings.GetByPath(FileName);
+    CPVRRecordingInfoTag *tag = PVRRecordings.GetByPath(FileName);
     if (tag && !tag->StreamURL().IsEmpty())
       return tag->StreamURL();
     else
