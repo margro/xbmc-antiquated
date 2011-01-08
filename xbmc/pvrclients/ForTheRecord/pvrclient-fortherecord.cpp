@@ -395,16 +395,17 @@ bool cPVRClientForTheRecord::OpenLiveStream(const PVR_CHANNEL &channelinfo)
   if (channel)
   {
     std::string filename;
-    XBMC->Log(LOG_DEBUG, "Tune channel: %s:%s", channel->Name(), channel->Guid().c_str());
+    XBMC->Log(LOG_INFO, "Tune XBMC channel: %i", channelinfo.number);
+    XBMC->Log(LOG_INFO, "Corresponding ForTheRecord channel: %s", channel->Guid().c_str());
     ForTheRecord::TuneLiveStream(channel->Guid(), filename);
 
     if (filename.length() == 0)
     {
-      XBMC->Log(LOG_ERROR, "Could not start the timeshift for channel %i. %s", channel->Name());
+      XBMC->Log(LOG_ERROR, "Could not start the timeshift for channel %i (%s)", channelinfo.number, channel->Guid().c_str());
       return false;
     }
 
-    XBMC->Log(LOG_DEBUG, "Live stream file: %s", filename.c_str());
+    XBMC->Log(LOG_INFO, "Live stream file: %s", filename.c_str());
     m_bTimeShiftStarted = true;
 
 #ifdef TSREADER
