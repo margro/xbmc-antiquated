@@ -448,7 +448,7 @@ namespace ForTheRecord
         char command[256];
         
         //Format: ForTheRecord/Guide/Programs/{guideChannelId}/{lowerTime}/{upperTime}
-        snprintf(command, 256, "ForTheRecord/Guide/Programs/%s/%i-%i-%i/%i-%i-%i", 
+        snprintf(command, 256, "ForTheRecord/Guide/Programs/%s/%i-%02i-%02i/%i-%02i-%02i", 
                  guidechannel_id.c_str(),
                  epg_start.tm_year + 1900, epg_start.tm_mon + 1, epg_start.tm_mday,
                  epg_end.tm_year + 1900, epg_end.tm_mon + 1, epg_end.tm_mday);
