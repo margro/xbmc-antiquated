@@ -252,7 +252,7 @@ PVR_ERROR GetProperties(PVR_SERVERPROPS* props)
   props->SupportChannelLogo        = false; //TODO: implement logo fetch code and enable
   props->SupportTimeShift          = false;
   props->SupportEPG                = true;
-  props->SupportRecordings         = false; //TODO: implement recordings fetch code and enable
+  props->SupportRecordings         = true;
   props->SupportTimers             = false; //TODO: implement scheduler related code and enable
   props->SupportTV                 = true;
   props->SupportRadio              = g_bRadioEnabled;
