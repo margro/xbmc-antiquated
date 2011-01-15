@@ -21,6 +21,7 @@
 #include "channel.h"
 #include "recordinggroup.h"
 #include "recordingsummary.h"
+#include "recording.h"
 #include "epg.h"
 #include "utils.h"
 #include "pvrclient-fortherecord.h"
@@ -340,39 +341,39 @@ PVR_ERROR cPVRClientForTheRecord::RequestRecordingsList(PVRHANDLE handle)
   {           
     if(recordinggroupresponse.type() == Json::arrayValue)
     {
+      // process list of recording groups
       int size = recordinggroupresponse.size();
-
-      // parse channelgroup list
       for ( int recordinggroupindex = 0; recordinggroupindex < size; ++recordinggroupindex )
       {
-        Json::Value recordingsbytitleresponse;
         cRecordingGroup recordinggroup;
         if (recordinggroup.Parse(recordinggroupresponse[recordinggroupindex]))
         {
+          Json::Value recordingsbytitleresponse;
           retval = ForTheRecord::GetRecordingsForTitle(recordinggroup.ProgramTitle(), recordingsbytitleresponse);
           if (retval >= 0)
           {
             if (recordingsbytitleresponse.type() == Json::arrayValue)
             {
+              // process list of recording summaries for this group
               int nrOfRecordings = recordingsbytitleresponse.size();
               for (int recordingindex = 0; recordingindex < nrOfRecordings; recordingindex++)
               {
-                cRecordingSummary recordingsummary;
-                if (recordingsummary.Parse(recordingsbytitleresponse[recordingindex]))
+                cRecording recording;
+                if (FetchRecordingDetails(recordingsbytitleresponse[recordingindex], recording))
                 {
                   PVR_RECORDINGINFO tag;
                   memset(&tag, 0 , sizeof(tag));
                   tag.index           = iNumRecordings;
-                  tag.channel_name    = recordingsummary.ChannelDisplayName();
+                  tag.channel_name    = recording.ChannelDisplayName();
                   tag.lifetime        = MAXLIFETIME; //TODO: recording.Lifetime();
                   tag.priority        = 0; //TODO? recording.Priority();
-                  tag.recording_time  = recordingsummary.RecordingStartTime();
-                  tag.duration        = recordingsummary.RecordingStopTime()-recordingsummary.RecordingStartTime();
-                  tag.description     = "";
-                  tag.title           = recordingsummary.Title();
-                  tag.subtitle        = "";
+                  tag.recording_time  = recording.RecordingStartTime();
+                  tag.duration        = recording.RecordingStopTime() - recording.RecordingStartTime();
+                  tag.description     = recording.Description();;
+                  tag.title           = recording.Title();
+                  tag.subtitle        = recording.SubTitle();
                   tag.directory       = recordinggroup.ProgramTitle().c_str(); //used in XBMC as directory structure below "Server X - hostname"
-                  tag.stream_url      = recordingsummary.RecordingFileName();
+                  tag.stream_url      = recording.RecordingFileName();
                   PVR->TransferRecordingEntry(handle, &tag);
                   iNumRecordings++;
                 }
@@ -384,6 +385,26 @@ PVR_ERROR cPVRClientForTheRecord::RequestRecordingsList(PVRHANDLE handle)
     }
   }
   return PVR_ERROR_NO_ERROR;
+}
+
+bool cPVRClientForTheRecord::FetchRecordingDetails(const Json::Value& data, cRecording& recording)
+{ 
+  bool fRc = false;
+  Json::Value recordingresponse;
+
+  cRecordingSummary recordingsummary;
+  if (recordingsummary.Parse(data))
+  {
+    int retval = ForTheRecord::GetRecordingById(recordingsummary.RecordingId(), recordingresponse);
+    if (retval >= 0)
+    {
+      if (recordingresponse.type() == Json::objectValue)
+      {
+        fRc = recording.Parse(recordingresponse);
+      }
+    }
+  }
+  return fRc;
 }
 
 PVR_ERROR cPVRClientForTheRecord::DeleteRecording(const PVR_RECORDINGINFO &recinfo)

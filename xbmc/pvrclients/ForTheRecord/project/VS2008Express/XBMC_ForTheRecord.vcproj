@@ -222,6 +222,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\recording.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\recordinggroup.cpp"
 				>
 			</File>
@@ -329,6 +333,10 @@
 			</File>
 			<File
 				RelativePath="..\..\pvrclient-fortherecord.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\recording.h"
 				>
 			</File>
 			<File

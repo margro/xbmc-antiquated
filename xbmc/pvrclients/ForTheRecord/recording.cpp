@@ -1,40 +1,44 @@
 /*
- *      Copyright (C) 2011 Fred Hoogduin
- *
- *  This Program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2, or (at your option)
- *  any later version.
- *
- *  This Program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, write to
- *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
- *  http://www.gnu.org/copyleft/gpl.html
- *
- */
+*      Copyright (C) 2011 Marcel Groothuis, Fho
+*
+*  This Program is free software; you can redistribute it and/or modify
+*  it under the terms of the GNU General Public License as published by
+*  the Free Software Foundation; either version 2, or (at your option)
+*  any later version.
+*
+*  This Program is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+*  GNU General Public License for more details.
+*
+*  You should have received a copy of the GNU General Public License
+*  along with XBMC; see the file COPYING.  If not, write to
+*  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+*  http://www.gnu.org/copyleft/gpl.html
+*
+*/
 
 #include <vector>
 #include "utils.h"
 #include <stdlib.h>
 #include <string.h>
-#include "recordingsummary.h"
+#include "recording.h"
 
-cRecordingSummary::cRecordingSummary(void)
+cRecording::cRecording(void)
 {
+  actors = "";
   category = "";
   channeldisplayname = "";
   channelid = "";
   channeltype = ForTheRecord::Television;
+  description = "";
+  director = "";
   episodenumber = 0;
   episodenumberdisplay = "";
   episodenumbertotal = 0;
   episodepart = 0;
   episodeparttotal = 0;
+  ischanged = false;
   ispartofseries = false;
   ispartialrecording = false;
   ispremiere = false;
@@ -59,27 +63,32 @@ cRecordingSummary::cRecordingSummary(void)
   starttime = 0;
   stoptime = 0;
   subtitle = "";
+  thumbnailfilename = "";
   title = "";
   videoaspect = ForTheRecord::Unknown;
 }
 
-cRecordingSummary::~cRecordingSummary(void)
+cRecording::~cRecording(void)
 {
 }
 
-bool cRecordingSummary::Parse(const Json::Value& data)
+bool cRecording::Parse(const Json::Value& data)
 {
   int offset;
   std::string t;
+  actors = data["Actors"].asString();
   category = data["Category"].asString();
   channeldisplayname = data["ChannelDisplayName"].asString();
   channelid = data["ChannelId"].asString();
   channeltype = (ForTheRecord::ChannelType) data["ChannelType"].asInt();
+  description = data["Description"].asString();
+  director = data["Director"].asString();
   episodenumber = data["EpisodeNumber"].asInt();
   episodenumberdisplay = data["EpisodeNumberDisplay"].asString();
   episodenumbertotal = data["EpisodeNumberTotal"].asInt();
   episodepart = data["EpisodePart"].asInt();
   episodeparttotal = data["EpisodePartTotal"].asInt();
+  ischanged = data["IsChanged"].asBool();
   ispartofseries = data["IsPartOfSeries"].asBool();
   ispartialrecording = data["IsPartialRecording"].asBool();
   ispremiere = data["IsPremiere"].asBool();
@@ -92,7 +101,7 @@ bool cRecordingSummary::Parse(const Json::Value& data)
   lastwatchedtime += ((offset/100)*3600);
   t = data["ProgramStartTime"].asString();
   programstarttime = ForTheRecord::WCFDateToTimeT(t, offset);
-  programstarttime += ((offset/100)*3600);
+  programstarttime += ((offset/100)*3600);;
   t = data["ProgramStopTime"].asString();
   programstoptime = ForTheRecord::WCFDateToTimeT(t, offset);
   programstoptime += ((offset/100)*3600);
@@ -118,6 +127,7 @@ bool cRecordingSummary::Parse(const Json::Value& data)
   stoptime = ForTheRecord::WCFDateToTimeT(t, offset);
   stoptime += ((offset/100)*3600);
   subtitle = data["SubTitle"].asString();
+  thumbnailfilename = data["ThumbnailFileName"].asString();
   title = data["Title"].asString();
   videoaspect = (ForTheRecord::VideoAspectRatio) data["VideoAspect"].asInt();
 
