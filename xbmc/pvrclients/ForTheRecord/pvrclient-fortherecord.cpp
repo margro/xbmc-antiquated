@@ -19,7 +19,8 @@
 #include "client.h"
 //#include "timers.h"
 #include "channel.h"
-//#include "recordings.h"
+#include "recordinggroup.h"
+#include "recordingsummary.h"
 #include "epg.h"
 #include "utils.h"
 #include "pvrclient-fortherecord.h"
@@ -303,11 +304,88 @@ PVR_ERROR cPVRClientForTheRecord::RequestChannelList(PVRHANDLE handle, int radio
 
 int cPVRClientForTheRecord::GetNumRecordings(void)
 {
-  return 0;
+  Json::Value response;
+  int retval = -1;
+  int iNumRecordings = 0;
+
+  retval = ForTheRecord::ForTheRecordJSONRPC("ForTheRecord/Control/RecordingGroups/Television/GroupByProgramTitle", "", response);
+  if(retval >= 0)
+  {           
+    if(response.type() == Json::arrayValue)
+    {
+      int size = response.size();
+
+      // parse channelgroup list
+      for ( int index = 0; index < size; ++index )
+      {
+        cRecordingGroup recordinggroup;
+        if (recordinggroup.Parse(response[index]))
+        {
+          iNumRecordings += recordinggroup.RecordingsCount();
+        }
+      }
+    }
+  }
+  return iNumRecordings;
 }
 
 PVR_ERROR cPVRClientForTheRecord::RequestRecordingsList(PVRHANDLE handle)
 {
+  Json::Value recordinggroupresponse;
+  int retval = -1;
+  int iNumRecordings = 0;
+
+  retval = ForTheRecord::ForTheRecordJSONRPC("ForTheRecord/Control/RecordingGroups/Television/GroupByProgramTitle", "", recordinggroupresponse);
+  if(retval >= 0)
+  {           
+    if(recordinggroupresponse.type() == Json::arrayValue)
+    {
+      int size = recordinggroupresponse.size();
+
+      // parse channelgroup list
+      for ( int recordinggroupindex = 0; recordinggroupindex < size; ++recordinggroupindex )
+      {
+        Json::Value recordingsbytitleresponse;
+        cRecordingGroup recordinggroup;
+        if (recordinggroup.Parse(recordinggroupresponse[recordinggroupindex]))
+        {
+          char* grouptitle = new char[recordinggroup.ProgramTitle().size() +1];
+          strcpy( grouptitle, recordinggroup.ProgramTitle().c_str());
+          retval = ForTheRecord::GetRecordingsForTitle(recordinggroup.ProgramTitle(), recordingsbytitleresponse);
+          if (retval >= 0)
+          {
+            if (recordingsbytitleresponse.type() == Json::arrayValue)
+            {
+              int nrOfRecordings = recordingsbytitleresponse.size();
+              for (int recordingindex = 0; recordingindex < nrOfRecordings; recordingindex++)
+              {
+                cRecordingSummary recordingsummary;
+                if (recordingsummary.Parse(recordingsbytitleresponse[recordingindex]))
+                {
+                  PVR_RECORDINGINFO tag;
+                  memset(&tag, 0 , sizeof(tag));
+                  tag.index           = iNumRecordings;
+                  tag.channel_name    = recordingsummary.ChannelDisplayName();
+                  tag.lifetime        = MAXLIFETIME; //TODO: recording.Lifetime();
+                  tag.priority        = 0; //TODO? recording.Priority();
+                  tag.recording_time  = recordingsummary.RecordingStartTime();
+                  tag.duration        = recordingsummary.RecordingStopTime()-recordingsummary.RecordingStartTime();
+                  tag.description     = "";
+                  tag.title           = recordingsummary.Title();
+                  tag.subtitle        = "";
+                  tag.directory       = grouptitle; //used in XBMC as directory structure below "Server X - hostname"
+                  tag.stream_url      = recordingsummary.RecordingFileName();
+                  PVR->TransferRecordingEntry(handle, &tag);
+                  iNumRecordings++;
+                }
+              }
+            }
+          }
+          delete[] grouptitle;
+        }
+      }
+    }
+  }
   return PVR_ERROR_NO_ERROR;
 }
 

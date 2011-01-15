@@ -461,11 +461,40 @@ namespace ForTheRecord
       return E_FAILED;
     }
 
+    int GetRecordingsForTitle(std::string title, Json::Value& response)
+    {
+      int retval = E_FAILED;
+      CURL *curl;
+      
+      XBMC->Log(LOG_DEBUG, "GetRecordingsForTitle");
+
+      curl = curl_easy_init();
+      
+      if(curl)
+      {
+        std::string command = "ForTheRecord/Control/RecordingsForProgramTitle/Television/";
+        char* pch = curl_easy_escape(curl, title.c_str(), 0);
+        command += pch;
+        curl_free(pch);
+        XBMC->Log(LOG_DEBUG, "GetRecordingsForTitle - URL: %s\n", command.c_str());
+
+        retval = ForTheRecord::ForTheRecordJSONRPC(command, "?includeNonExisting=false", response);
+
+        curl_easy_cleanup(curl);
+      }
+      return retval;
+    }
+
     time_t WCFDateToTimeT(std::string wcfdate, int& offset)
     {
       time_t ticks;
       char offsetc;
       int offsetv;
+
+      if (wcfdate.empty())
+      {
+        return 0;
+      }
 
       //WCF compatible format "/Date(1290896700000+0100)/" => 2010-11-27 23:25:00
       ticks = atoi(wcfdate.substr(6, 10).c_str()); //only take the first 10 chars (fits in a 32-bit time_t value)

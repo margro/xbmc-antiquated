@@ -33,6 +33,35 @@ namespace ForTheRecord
     Radio = 1
   };
 
+  enum RecordingGroupMode {
+    GroupByProgramTitle = 0,
+    GroupBySchedule = 1,
+    GroupByCategory = 2,
+    GroupByChannel = 3,
+    GroupByRecordingDay = 4
+  };
+
+  enum SchedulePriority {
+    VeryLow = 0,
+    Low = 1,
+    Normal = 2,
+    High = 3,
+    VeryHigh = 4
+  };
+
+  enum KeepUntilMode {
+    UntilSpaceIsNeeded = 0,
+    Forever = 1,
+    NumberOfDays = 2,
+    NumberOfEpisodes =3
+  };
+
+  enum VideoAspectRatio {
+    Unknown = 0,
+    Standard = 1,
+    Widescreen = 2
+  };
+
   /**
    * \brief Send a REST command to 4TR and return the JSON response string
    * \param command       The command string url (starting from "ForTheRecord/")
@@ -81,6 +110,13 @@ namespace ForTheRecord
    * \param epg_stop         Until this date
    */
   int GetEPGData(std::string guidechannel_id, struct tm epg_start, struct tm epg_end, Json::Value& response);
+
+  /**
+   * \brief Fetch the data for all recordings for a given title
+   * \param title Program title of recording
+   * \param response Reference to a std::string used to store the json response string
+   */
+  int GetRecordingsForTitle(std::string title, Json::Value& response);
 
   time_t WCFDateToTimeT(std::string wcfdate, int& offset);
 
