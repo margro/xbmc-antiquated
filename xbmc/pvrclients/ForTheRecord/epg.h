@@ -43,7 +43,7 @@ public:
   void Reset();
 
   bool Parse(const Json::Value& data);
-  std::string UniqueId(void) const { return m_guideprogramid; }
+  const std::string& UniqueId(void) const { return m_guideprogramid; }
   time_t StartTime(void) const { return m_starttime; }
   time_t EndTime(void) const { return m_endtime; }
   const char *Title(void) const { return m_title.c_str(); }

@@ -40,10 +40,10 @@ public:
 
   bool Parse(const Json::Value& data);
   const char *Name(void) const { return name.c_str(); }
-  std::string Guid(void) const { return guid; }
+  const std::string& Guid(void) const { return guid; }
   int LCN(void) const { return lcn; }
   ForTheRecord::ChannelType Type(void) const { return type; }
   int ID(void) const { return id; }
   void SetID(int new_id) { id = new_id; }
-  std::string GuideChannelID(void) const { return guidechannelid; };
+  const std::string& GuideChannelID(void) const { return guidechannelid; };
 };
