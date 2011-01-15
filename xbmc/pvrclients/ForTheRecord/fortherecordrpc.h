@@ -118,6 +118,13 @@ namespace ForTheRecord
    */
   int GetRecordingsForTitle(const std::string& title, Json::Value& response);
 
+  /**
+   * \brief Fetch the detailed information of a recorded show
+   * \param id unique id (guid) of the recording
+   * \param response Reference to a std::string used to store the json response string
+   */
+  int GetRecordingById(const std::string& id, Json::Value& response);
+
   time_t WCFDateToTimeT(const std::string& wcfdate, int& offset);
 
 } //namespace ForTheRecord

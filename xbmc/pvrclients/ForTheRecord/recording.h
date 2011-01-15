@@ -1,6 +1,6 @@
 #pragma once
 /*
- *      Copyright (C) 2011 Fred Hoogduin
+ *      Copyright (C) 2011 Marcel Groothuis, FHo
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,20 +24,22 @@
 #include <json/json.h>
 #include "fortherecordrpc.h"
 
-#define MAXLIFETIME 99 //Based on VDR addon and VDR documentation. 99=Keep forever, 0=can be deleted at any time, 1..98=days to keep
-
-class cRecordingSummary
+class cRecording
 {
 private:
+  std::string actors;
   std::string category;
   std::string channeldisplayname;
   std::string channelid;
   ForTheRecord::ChannelType channeltype;
+  std::string description;
+  std::string director;
   int episodenumber;
   std::string episodenumberdisplay;
   int episodenumbertotal;
   int episodepart;
   int episodeparttotal;
+  bool ischanged;
   bool ispartofseries;
   bool ispartialrecording;
   bool ispremiere;
@@ -62,24 +64,28 @@ private:
   time_t starttime;
   time_t stoptime;
   std::string subtitle;
+  std::string thumbnailfilename;
   std::string title;
   ForTheRecord::VideoAspectRatio videoaspect;
-
 public:
-  cRecordingSummary(void);
-  virtual ~cRecordingSummary(void);
+  cRecording(void);
+  virtual ~cRecording(void);
 
   bool Parse(const Json::Value& data);
 
+  const char *Actors(void) const { return actors.c_str(); }
   const char *Category(void) const { return category.c_str(); }
   const char *ChannelDisplayName(void) const { return channeldisplayname.c_str(); }
   const char *ChannelId(void) const { return channelid.c_str(); }
   ForTheRecord::ChannelType ChannelType(void) const { return channeltype; };
+  const char *Description(void) const { return description.c_str(); }
+  const char *Director(void) const { return director.c_str(); }
   int EpisodeNumber(void) const { return episodenumber; }
   const char *EpisodeNumberDisplay(void) const { return episodenumberdisplay.c_str(); }
   int EpisodeNumberTotal(void) const { return episodenumbertotal; }
   int EpisodePart(void) const { return episodepart; }
   int EpisodePartTotal(void) const { return episodeparttotal; }
+  bool IsChanged(void) const { return ischanged; }
   bool IsPartOfSeries(void) const { return ispartofseries; }
   bool IsPartialRecording(void) const { return ispartialrecording; }
   bool IsPremiere(void) const { return ispremiere; }
@@ -93,7 +99,7 @@ public:
   const char *Rating(void) const { return rating.c_str(); }
   const char *RecordingFileFormatId(void) const { return recordingfileformatid.c_str(); }
   const char *RecordingFileName(void) const { return recordingfilename.c_str(); }
-  const std::string& RecordingId(void) const { return recordingid; }
+  const char *RecordingId(void) const { return recordingid.c_str(); }
   time_t RecordingStartTime(void) const { return recordingstarttime; }
   time_t RecordingStopTime(void) const { return recordingstoptime; }
   const char *ScheduleId(void) const { return scheduleid.c_str(); }
@@ -104,6 +110,7 @@ public:
   time_t StartTime(void) const { return starttime; }
   time_t StopTime(void) const { return stoptime; }
   const char *SubTitle(void) const { return subtitle.c_str(); }
+  const char *ThumbnailFileName(void) const { return thumbnailfilename.c_str(); }
   const char *Title(void) const { return title.c_str(); }
   ForTheRecord::VideoAspectRatio VideoAspect(void) const { return videoaspect; }
 };

@@ -56,6 +56,7 @@ bool cRecordingGroup::Parse(const Json::Value& data)
   int offset;
   std::string lpst = data["LatestProgramStartTime"].asString();
   latestprogramstarttime = ForTheRecord::WCFDateToTimeT(lpst, offset);
+  latestprogramstarttime += ((offset/100)*3600);
   programtitle = data["ProgramTitle"].asString();
   recordinggroupmode = (ForTheRecord::RecordingGroupMode) data["RecordingGroupMode"].asInt();
   recordingscount = data["RecordingsCount"].asInt();

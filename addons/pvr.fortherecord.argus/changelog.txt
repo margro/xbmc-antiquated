@@ -2,6 +2,9 @@
 - Initial support for retrieval of recordings on the ForTheRecord Argus server.
 - Overview of recordings, grouped by Title
 - Viewing of a selected recording via the ForTheRecord shares
+- Slight changes in std::string handling as parameter and return values, fixes some memory corruptions 
+- Support for retrieval of recordings on the ForTheRecord Argus server
+- Overview of recordings, grouped by Title, including recording starttime, and description
 - Credits: Red-F
 v0.0.1.108 (08-01-2011)
 - EPG data retrieval fixed for dates where month and day have less than 2 digits (credits: Red-F)

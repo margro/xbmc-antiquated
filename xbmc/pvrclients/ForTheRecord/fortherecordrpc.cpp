@@ -485,6 +485,27 @@ namespace ForTheRecord
       return retval;
     }
 
+    int GetRecordingById(const std::string& id, Json::Value& response)
+    {
+      int retval = E_FAILED;
+      CURL *curl;
+
+      XBMC->Log(LOG_DEBUG, "GetRecordingsById");
+
+      curl = curl_easy_init();
+
+      if(curl)
+      {
+        std::string command = "ForTheRecord/Control/RecordingById/" + id;
+        XBMC->Log(LOG_DEBUG, "GetRecordingsForTitle - URL: %s\n", command.c_str());
+
+        retval = ForTheRecord::ForTheRecordJSONRPC(command, "", response);
+
+        curl_easy_cleanup(curl);
+      }
+      return retval;
+    }
+
     time_t WCFDateToTimeT(const std::string& wcfdate, int& offset)
     {
       time_t ticks;

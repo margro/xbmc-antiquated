@@ -23,6 +23,7 @@
 #include "../../addons/include/xbmc_pvr_types.h"
 
 #include "channel.h"
+#include "recording.h"
 #include "os-dependent.h"
 
 #ifdef TSREADER
@@ -92,6 +93,7 @@ public:
 private:
   cChannel* FetchChannel(int channel_uid);
   void Close();
+  bool FetchRecordingDetails(const Json::Value& data, cRecording& recording);
 
   //int                     m_iCurrentChannel;
   bool                    m_bConnected;
