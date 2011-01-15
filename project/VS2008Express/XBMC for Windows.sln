@@ -219,7 +219,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pvrclient_fortherecord", ".
 		{87EE9DA4-DE1E-4448-8324-183C98DCA588} = {87EE9DA4-DE1E-4448-8324-183C98DCA588}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pvrclient_fortherecord_libcurl", "..\..\xbmc\pvrclients\ForTheRecord\lib\curl-7.21.2\lib\libcurl.vcproj", "{87EE9DA4-DE1E-4448-8324-183C98DCA588}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pvrclient_fortherecord_libcurl", "..\..\xbmc\pvrclients\ForTheRecord\lib\curl-7.21.3\lib\libcurl.vcproj", "{87EE9DA4-DE1E-4448-8324-183C98DCA588}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
