@@ -60,7 +60,7 @@ namespace ForTheRecord
     //http://localhost:49943/ForTheRecord/Configuration/help
     //http://localhost:49943/ForTheRecord/Log/help
 
-    int ForTheRecordRPC(std::string command, std::string arguments, std::string& json_response)
+    int ForTheRecordRPC(const std::string& command, const std::string& arguments, std::string& json_response)
     {
       CURL *curl;
       CURLcode res;
@@ -102,7 +102,7 @@ namespace ForTheRecord
       }
     }
 
-    int ForTheRecordJSONRPC(std::string command, std::string arguments, Json::Value& json_response)
+    int ForTheRecordJSONRPC(const std::string& command, const std::string& arguments, Json::Value& json_response)
     {
       std::string response;
       int retval = E_FAILED;
@@ -366,7 +366,7 @@ namespace ForTheRecord
     //Remember the last LiveStream object to be able to stop the stream again
     Json::Value g_current_livestream;
 
-    int TuneLiveStream(const std::string channel_id, std::string& stream)
+    int TuneLiveStream(const std::string& channel_id, std::string& stream)
     {
       // Send only a channel object in json format, no LiveStream object.
       // FTR will answer with a LiveStream object.
@@ -441,7 +441,7 @@ namespace ForTheRecord
       return false;
     }
 
-    int GetEPGData(std::string guidechannel_id, struct tm epg_start, struct tm epg_end, Json::Value& response)
+    int GetEPGData(const std::string& guidechannel_id, struct tm epg_start, struct tm epg_end, Json::Value& response)
     {
       if ( guidechannel_id.length() > 0 )
       {
@@ -461,7 +461,7 @@ namespace ForTheRecord
       return E_FAILED;
     }
 
-    int GetRecordingsForTitle(std::string title, Json::Value& response)
+    int GetRecordingsForTitle(const std::string& title, Json::Value& response)
     {
       int retval = E_FAILED;
       CURL *curl;
@@ -485,7 +485,7 @@ namespace ForTheRecord
       return retval;
     }
 
-    time_t WCFDateToTimeT(std::string wcfdate, int& offset)
+    time_t WCFDateToTimeT(const std::string& wcfdate, int& offset)
     {
       time_t ticks;
       char offsetc;

@@ -68,7 +68,7 @@ namespace ForTheRecord
    * \param json_response Reference to a std::string used to store the json response string
    * \return 0 on ok, -1 on a failure
    */
-  int ForTheRecordRPC(std::string command, std::string arguments, std::string& json_response);
+  int ForTheRecordRPC(const std::string& command, const std::string& arguments, std::string& json_response);
 
   /**
    * \brief Send a REST command to 4TR and return the JSON response 
@@ -76,7 +76,7 @@ namespace ForTheRecord
    * \param json_response Reference to a Json::Value used to store the parsed Json value
    * \return 0 on ok, -1 on a failure
    */
-  int ForTheRecordJSONRPC(std::string command, std::string arguments, Json::Value& json_response);
+  int ForTheRecordJSONRPC(const std::string& command, const std::string& arguments, Json::Value& json_response);
 
   /**
    * \brief Ping core service.
@@ -90,7 +90,7 @@ namespace ForTheRecord
    * \param channel_id  The ForTheRecord ChannelID of the channel
    * \param stream      Reference to a string that will point to the tsbuffer file/RTSP stream
    */
-  int TuneLiveStream(const std::string channel_id, std::string& stream);
+  int TuneLiveStream(const std::string& channel_id, std::string& stream);
 
   /**
    * \brief Stops the last tuned live stream
@@ -109,15 +109,15 @@ namespace ForTheRecord
    * \param epg_start        Start from this date
    * \param epg_stop         Until this date
    */
-  int GetEPGData(std::string guidechannel_id, struct tm epg_start, struct tm epg_end, Json::Value& response);
+  int GetEPGData(const std::string& guidechannel_id, struct tm epg_start, struct tm epg_end, Json::Value& response);
 
   /**
    * \brief Fetch the data for all recordings for a given title
    * \param title Program title of recording
    * \param response Reference to a std::string used to store the json response string
    */
-  int GetRecordingsForTitle(std::string title, Json::Value& response);
+  int GetRecordingsForTitle(const std::string& title, Json::Value& response);
 
-  time_t WCFDateToTimeT(std::string wcfdate, int& offset);
+  time_t WCFDateToTimeT(const std::string& wcfdate, int& offset);
 
 } //namespace ForTheRecord

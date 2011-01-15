@@ -52,7 +52,7 @@ public:
   ForTheRecord::ChannelType ChannelType(void) const { return channeltype; }
   bool IsRecording(void) const { return isrecording; }
   time_t LatestProgramStartTime(void) const { return latestprogramstarttime; }
-  std::string ProgramTitle(void) const { return programtitle; }
+  const std::string& ProgramTitle(void) const { return programtitle; }
   ForTheRecord::RecordingGroupMode RecordingGroupMode(void) const { return recordinggroupmode; }
   int RecordingsCount(void) const { return recordingscount; }
   const char *ScheduleId(void) const { return scheduleid.c_str(); }

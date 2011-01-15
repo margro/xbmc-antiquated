@@ -349,8 +349,6 @@ PVR_ERROR cPVRClientForTheRecord::RequestRecordingsList(PVRHANDLE handle)
         cRecordingGroup recordinggroup;
         if (recordinggroup.Parse(recordinggroupresponse[recordinggroupindex]))
         {
-          char* grouptitle = new char[recordinggroup.ProgramTitle().size() +1];
-          strcpy( grouptitle, recordinggroup.ProgramTitle().c_str());
           retval = ForTheRecord::GetRecordingsForTitle(recordinggroup.ProgramTitle(), recordingsbytitleresponse);
           if (retval >= 0)
           {
@@ -373,7 +371,7 @@ PVR_ERROR cPVRClientForTheRecord::RequestRecordingsList(PVRHANDLE handle)
                   tag.description     = "";
                   tag.title           = recordingsummary.Title();
                   tag.subtitle        = "";
-                  tag.directory       = grouptitle; //used in XBMC as directory structure below "Server X - hostname"
+                  tag.directory       = recordinggroup.ProgramTitle().c_str(); //used in XBMC as directory structure below "Server X - hostname"
                   tag.stream_url      = recordingsummary.RecordingFileName();
                   PVR->TransferRecordingEntry(handle, &tag);
                   iNumRecordings++;
@@ -381,7 +379,6 @@ PVR_ERROR cPVRClientForTheRecord::RequestRecordingsList(PVRHANDLE handle)
               }
             }
           }
-          delete[] grouptitle;
         }
       }
     }
