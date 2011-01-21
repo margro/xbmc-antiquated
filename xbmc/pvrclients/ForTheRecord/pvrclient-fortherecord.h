@@ -100,7 +100,7 @@ private:
   //bool                    m_bStop;
   bool                    m_bTimeShiftStarted;
   std::string             m_BackendName;
-  std::string             m_BackendVersion;
+  int                     m_BackendVersion;
   time_t                  m_BackendUTCoffset;
   time_t                  m_BackendTime;
 
