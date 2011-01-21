@@ -522,12 +522,39 @@ namespace ForTheRecord
     if(curl)
     {
       std::string command = "ForTheRecord/Control/RecordingById/" + id;
-      XBMC->Log(LOG_DEBUG, "GetRecordingsForTitle - URL: %s\n", command.c_str());
+      XBMC->Log(LOG_DEBUG, "RecordingsById - URL: %s\n", command.c_str());
 
       retval = ForTheRecord::ForTheRecordJSONRPC(command, "", response);
 
       curl_easy_cleanup(curl);
     }
+    return retval;
+  }
+
+  int DeleteRecording(const std::string recordingfilename)
+  {
+    int retval = E_FAILED;
+    CURL *curl;
+    Json::Value response;
+
+    XBMC->Log(LOG_DEBUG, "DeleteRecording");
+
+    curl = curl_easy_init();
+
+    if(curl)
+    {
+      std::string command = "ForTheRecord/Control/DeleteRecording/";
+      char* pch = curl_easy_escape(curl, recordingfilename.c_str(), 0);
+      command += pch;
+      curl_free(pch);
+      
+      XBMC->Log(LOG_DEBUG, "DeleteRecording - URL: %s\n", command.c_str());
+
+      retval = ForTheRecord::ForTheRecordJSONRPC(command, "?deleteRecordingFile=true", response);
+
+      curl_easy_cleanup(curl);
+    }
+
     return retval;
   }
 

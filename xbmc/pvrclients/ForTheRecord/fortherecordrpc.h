@@ -131,6 +131,12 @@ namespace ForTheRecord
    */
   int GetRecordingById(const std::string& id, Json::Value& response);
 
+  /**
+   * \brief Delete the recording on the pvr backend
+   * \param recordingfilename UNC filename to delete
+   */
+  int DeleteRecording(const std::string recordingfilename);
+
   time_t WCFDateToTimeT(const std::string& wcfdate, int& offset);
 
 } //namespace ForTheRecord

@@ -401,8 +401,14 @@ bool cPVRClientForTheRecord::FetchRecordingDetails(const Json::Value& data, cRec
 
 PVR_ERROR cPVRClientForTheRecord::DeleteRecording(const PVR_RECORDINGINFO &recinfo)
 {
-  return PVR_ERROR_NOT_DELETED;
-  //return PVR_ERROR_NO_ERROR;
+  if (ForTheRecord::DeleteRecording(recinfo.stream_url) >= 0) 
+  {
+    return PVR_ERROR_NO_ERROR;
+  }
+  else
+  {
+    return PVR_ERROR_NOT_DELETED;
+  }
 }
 
 PVR_ERROR cPVRClientForTheRecord::RenameRecording(const PVR_RECORDINGINFO &recinfo, const char *newname)

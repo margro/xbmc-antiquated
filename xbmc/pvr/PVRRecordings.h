@@ -52,15 +52,15 @@ public:
   bool operator !=(const CPVRRecordingInfoTag& right) const;
   void Reset(void);
 
-  CStdString Title(void) const { return m_strTitle; }
+  const CStdString& Title(void) const { return m_strTitle; }
   void SetTitle(CStdString Title) { m_strTitle = Title; }
-  CStdString Directory(void) const { return m_strDirectory; }
+  const CStdString& Directory(void) const { return m_strDirectory; }
   void SetDirectory(CStdString path) { m_strDirectory = path; }
-  CStdString PlotOutline(void) const { return m_strPlotOutline; }
+  const CStdString& PlotOutline(void) const { return m_strPlotOutline; }
   void SetPlotOutline(CStdString PlotOutline) { m_strPlotOutline = PlotOutline; }
-  CStdString Plot(void) const { return m_strPlot; }
+  const CStdString& Plot(void) const { return m_strPlot; }
   void SetPlot(CStdString Plot) { m_strPlot = Plot; }
-  CStdString ChannelName(void) const { return m_strChannel; }
+  const CStdString& ChannelName(void) const { return m_strChannel; }
   void SetChannelName(CStdString name) { m_strChannel = name; }
   CDateTime RecordingTime(void) const { return m_recordingTime; }
   void SetRecordingTime(CDateTime time) { m_recordingTime = time; }
@@ -70,14 +70,14 @@ public:
   void SetLifetime(int Lifetime) { m_Lifetime = Lifetime; }
   int Priority(void) const { return m_Priority; }
   void SetPriority(int Priority) { m_Priority = Priority; }
-  CStdString Path(void) const { return m_strFileNameAndPath; }
+  const CStdString& Path(void) const { return m_strFileNameAndPath; }
   void SetPath(CStdString path) { m_strFileNameAndPath = path; }
 
   long ClientID(void) const { return m_clientID; }
   void SetClientID(int ClientId) { m_clientID = ClientId; }
   long ClientIndex(void) const { return m_clientIndex; }
   void SetClientIndex(int ClientIndex) { m_clientIndex = ClientIndex; }
-  CStdString StreamURL(void) const { return m_strStreamURL; }
+  const CStdString& StreamURL(void) const { return m_strStreamURL; }
   void SetStreamURL(CStdString stream) { m_strStreamURL = stream; }
 
   bool Delete(void) const;
