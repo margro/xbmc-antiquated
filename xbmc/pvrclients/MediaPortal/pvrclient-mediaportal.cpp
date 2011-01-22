@@ -980,6 +980,7 @@ bool cPVRClientMediaPortal::OpenLiveStream(const PVR_CHANNEL &channelinfo)
     } else {
       // RTSP url
       m_tsreader->Open(timeshiftfields[0].c_str());
+      usleep(400000);
     }
 #else
 
@@ -997,16 +998,16 @@ int cPVRClientMediaPortal::ReadLiveStream(unsigned char* buf, int buf_size)
   unsigned char* bufptr = buf;
 
   //XBMC->Log(LOG_DEBUG, "->ReadLiveStream(buf_size=%i)", buf_size);
+  if (!m_tsreader)
+    return -1;
 
   while (read_done < (unsigned long) buf_size)
   {
     read_wanted = buf_size - read_done;
-    if (!m_tsreader)
-      return -1;
 
     if (m_tsreader->Read(bufptr, read_wanted, &read_wanted) > 0)
     {
-      usleep(20000);
+      usleep(400000);
       read_timeouts++;
       return read_wanted; //writeNoSignalStream(buf, (buf_size - read_done));
     }
@@ -1014,7 +1015,7 @@ int cPVRClientMediaPortal::ReadLiveStream(unsigned char* buf, int buf_size)
 
     if ( read_done < (unsigned long) buf_size )
     {
-      if (read_timeouts > 50)
+      if (read_timeouts > 25)
       {
         XBMC->Log(LOG_INFO, "No data in 1 second");
         read_timeouts = 0;
@@ -1023,7 +1024,7 @@ int cPVRClientMediaPortal::ReadLiveStream(unsigned char* buf, int buf_size)
       }
       bufptr += read_wanted;
       read_timeouts++;
-      usleep(20000);
+      usleep(40000);
     }
   }
   read_timeouts = 0;
