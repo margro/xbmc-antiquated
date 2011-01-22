@@ -178,7 +178,7 @@
 				OutputFile="../../../../../system/python/DLLs/bz2.pyd"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				IgnoreDefaultLibraryNames="libc, LIBCMT"
+				IgnoreDefaultLibraryNames="libc, LIBCMTD"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)bz2.pdb"
 				SubSystem="2"
