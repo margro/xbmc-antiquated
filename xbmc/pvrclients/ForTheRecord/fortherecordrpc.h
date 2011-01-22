@@ -112,6 +112,12 @@ namespace ForTheRecord
   int GetEPGData(const std::string& guidechannel_id, struct tm epg_start, struct tm epg_end, Json::Value& response);
 
   /**
+   * \brief Fetch the recording groups sorted by title
+   * \param response Reference to a std::string used to store the json response string
+   */
+  int GetRecordingGroupByTitle(Json::Value& response);
+
+  /**
    * \brief Fetch the data for all recordings for a given title
    * \param title Program title of recording
    * \param response Reference to a std::string used to store the json response string
