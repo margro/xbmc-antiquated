@@ -229,7 +229,7 @@ PVR_ERROR cPVRClientForTheRecord::RequestChannelList(PVRHANDLE handle, int radio
   }
   else
   {
-      retval = ForTheRecord::ForTheRecordJSONRPC("ForTheRecord/Scheduler/Channels/Radio", "?visibleOnly=false", response);        
+    retval = ForTheRecord::ForTheRecordJSONRPC("ForTheRecord/Scheduler/Channels/Radio", "?visibleOnly=false", response);        
   }
 
   if(retval >= 0)
@@ -253,7 +253,7 @@ PVR_ERROR cPVRClientForTheRecord::RequestChannelList(PVRHANDLE handle, int radio
           //if (channel.LCN())
           //  tag.uid = channel.LCN();
           //else
-            tag.uid = tag.number;
+          tag.uid = tag.number;
           tag.name = channel.Name();
           tag.callsign = channel.Name(); //Used for automatic channel icon search
           tag.iconpath = "";
@@ -309,21 +309,19 @@ int cPVRClientForTheRecord::GetNumRecordings(void)
   int retval = -1;
   int iNumRecordings = 0;
 
-  retval = ForTheRecord::ForTheRecordJSONRPC("ForTheRecord/Control/RecordingGroups/Television/GroupByProgramTitle", "", response);
-  if(retval >= 0)
-  {           
-    if(response.type() == Json::arrayValue)
-    {
-      int size = response.size();
+  XBMC->Log(LOG_DEBUG, "GetNumRecordings()");
+  retval = ForTheRecord::GetRecordingGroupByTitle(response);
+  if (retval >= 0)
+  {
+    int size = response.size();
 
-      // parse channelgroup list
-      for ( int index = 0; index < size; ++index )
+    // parse channelgroup list
+    for ( int index = 0; index < size; ++index )
+    {
+      cRecordingGroup recordinggroup;
+      if (recordinggroup.Parse(response[index]))
       {
-        cRecordingGroup recordinggroup;
-        if (recordinggroup.Parse(response[index]))
-        {
-          iNumRecordings += recordinggroup.RecordingsCount();
-        }
+        iNumRecordings += recordinggroup.RecordingsCount();
       }
     }
   }
@@ -336,48 +334,42 @@ PVR_ERROR cPVRClientForTheRecord::RequestRecordingsList(PVRHANDLE handle)
   int retval = -1;
   int iNumRecordings = 0;
 
-  retval = ForTheRecord::ForTheRecordJSONRPC("ForTheRecord/Control/RecordingGroups/Television/GroupByProgramTitle", "", recordinggroupresponse);
+  retval = ForTheRecord::GetRecordingGroupByTitle(recordinggroupresponse);
   if(retval >= 0)
   {           
-    if(recordinggroupresponse.type() == Json::arrayValue)
+    // process list of recording groups
+    int size = recordinggroupresponse.size();
+    for ( int recordinggroupindex = 0; recordinggroupindex < size; ++recordinggroupindex )
     {
-      // process list of recording groups
-      int size = recordinggroupresponse.size();
-      for ( int recordinggroupindex = 0; recordinggroupindex < size; ++recordinggroupindex )
+      cRecordingGroup recordinggroup;
+      if (recordinggroup.Parse(recordinggroupresponse[recordinggroupindex]))
       {
-        cRecordingGroup recordinggroup;
-        if (recordinggroup.Parse(recordinggroupresponse[recordinggroupindex]))
+        Json::Value recordingsbytitleresponse;
+        retval = ForTheRecord::GetRecordingsForTitle(recordinggroup.ProgramTitle(), recordingsbytitleresponse);
+        if (retval >= 0)
         {
-          Json::Value recordingsbytitleresponse;
-          retval = ForTheRecord::GetRecordingsForTitle(recordinggroup.ProgramTitle(), recordingsbytitleresponse);
-          if (retval >= 0)
+          // process list of recording summaries for this group
+          int nrOfRecordings = recordingsbytitleresponse.size();
+          for (int recordingindex = 0; recordingindex < nrOfRecordings; recordingindex++)
           {
-            if (recordingsbytitleresponse.type() == Json::arrayValue)
+            cRecording recording;
+            if (FetchRecordingDetails(recordingsbytitleresponse[recordingindex], recording))
             {
-              // process list of recording summaries for this group
-              int nrOfRecordings = recordingsbytitleresponse.size();
-              for (int recordingindex = 0; recordingindex < nrOfRecordings; recordingindex++)
-              {
-                cRecording recording;
-                if (FetchRecordingDetails(recordingsbytitleresponse[recordingindex], recording))
-                {
-                  PVR_RECORDINGINFO tag;
-                  memset(&tag, 0 , sizeof(tag));
-                  tag.index           = iNumRecordings;
-                  tag.channel_name    = recording.ChannelDisplayName();
-                  tag.lifetime        = MAXLIFETIME; //TODO: recording.Lifetime();
-                  tag.priority        = 0; //TODO? recording.Priority();
-                  tag.recording_time  = recording.RecordingStartTime();
-                  tag.duration        = recording.RecordingStopTime() - recording.RecordingStartTime();
-                  tag.description     = recording.Description();;
-                  tag.title           = recording.Title();
-                  tag.subtitle        = recording.SubTitle();
-                  tag.directory       = recordinggroup.ProgramTitle().c_str(); //used in XBMC as directory structure below "Server X - hostname"
-                  tag.stream_url      = recording.RecordingFileName();
-                  PVR->TransferRecordingEntry(handle, &tag);
-                  iNumRecordings++;
-                }
-              }
+              PVR_RECORDINGINFO tag;
+              memset(&tag, 0 , sizeof(tag));
+              tag.index           = iNumRecordings;
+              tag.channel_name    = recording.ChannelDisplayName();
+              tag.lifetime        = MAXLIFETIME; //TODO: recording.Lifetime();
+              tag.priority        = 0; //TODO? recording.Priority();
+              tag.recording_time  = recording.RecordingStartTime();
+              tag.duration        = recording.RecordingStopTime() - recording.RecordingStartTime();
+              tag.description     = recording.Description();;
+              tag.title           = recording.Title();
+              tag.subtitle        = recording.SubTitle();
+              tag.directory       = recordinggroup.ProgramTitle().c_str(); //used in XBMC as directory structure below "Server X - hostname"
+              tag.stream_url      = recording.RecordingFileName();
+              PVR->TransferRecordingEntry(handle, &tag);
+              iNumRecordings++;
             }
           }
         }
