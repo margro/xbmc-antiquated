@@ -1,8 +1,12 @@
-+v0.0.1.109 (13-01-2011)
+v0.0.1.110 (22-01-2011)
+- Delete recording implemented, needs ForTheRecord 1.5.1.0 Beta 6 or newer
+- Programme descriptions added to EPG and TV channels screen
+- More fixes to memory handling
+v0.0.1.109 (13-01-2011)
 - Initial support for retrieval of recordings on the ForTheRecord Argus server.
 - Overview of recordings, grouped by Title
 - Viewing of a selected recording via the ForTheRecord shares
-- Slight changes in std::string handling as parameter and return values, fixes some memory corruptions 
+- Fixes some memory corruptions 
 - Support for retrieval of recordings on the ForTheRecord Argus server
 - Overview of recordings, grouped by Title, including recording starttime, and description
 - Credits: Red-F

@@ -558,6 +558,39 @@ namespace ForTheRecord
     return retval;
   }
 
+  int GetProgramById(const std::string& id, Json::Value& response)
+  {
+    int retval = E_FAILED;
+    CURL *curl;
+
+    XBMC->Log(LOG_DEBUG, "ProgramById");
+
+    curl = curl_easy_init();
+
+    if(curl)
+    {
+      std::string command = "ForTheRecord/Guide/Program/" + id;
+      XBMC->Log(LOG_DEBUG, "GetProgramById - URL: %s\n", command.c_str());
+
+      retval = ForTheRecord::ForTheRecordJSONRPC(command, "", response);
+      if(retval >= 0)
+      {           
+        if (response.type() != Json::objectValue)
+        {
+          retval = E_FAILED;
+          XBMC->Log(LOG_NOTICE, "GetProgramById did not return a Json::objectValue [%d].", response.type());
+        }
+      }
+      else
+      {
+        XBMC->Log(LOG_NOTICE, "GetProgramById remote call failed.");
+      }
+
+      curl_easy_cleanup(curl);
+    }
+    return retval;
+  }
+
   time_t WCFDateToTimeT(const std::string& wcfdate, int& offset)
   {
     time_t ticks;

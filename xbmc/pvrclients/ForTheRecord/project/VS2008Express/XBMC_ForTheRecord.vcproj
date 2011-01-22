@@ -214,6 +214,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\guideprogram.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\KeepAliveThread.cpp"
 				>
 			</File>
@@ -325,6 +329,10 @@
 			</File>
 			<File
 				RelativePath="..\..\fortherecordrpc.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\guideprogram.h"
 				>
 			</File>
 			<File

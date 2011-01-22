@@ -69,6 +69,7 @@ bool cEpg::Parse(const Json::Value& data)
     //.SubTitle=""
     //.Title="NOS Studio Sport"
     //.VideoAspect=0
+    m_guideprogramid = data["GuideProgramId"].asString();
     m_title = data["Title"].asString();
     m_subtitle = data["SubTitle"].asString();
 
