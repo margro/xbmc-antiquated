@@ -444,24 +444,56 @@ bool CDVDDemuxFFmpeg::Open(CDVDInputStream* pInput)
 
   if (streaminfo)
   {
-    /* too speed up dvd switches, only analyse very short */
+    /* to speed up dvd switches, only analyse very short */
     if(m_pInput->IsStreamType(DVDSTREAM_TYPE_DVD))
       m_pFormatContext->max_analyze_duration = 500000;
 
-
     CLog::Log(LOGDEBUG, "%s - av_find_stream_info starting", __FUNCTION__);
-    int iErr = m_dllAvFormat.av_find_stream_info(m_pFormatContext);
+    int stream_count = m_pFormatContext->nb_streams;
+    int iErr = -1;
+
+    try
+    {
+      iErr = m_dllAvFormat.av_find_stream_info(m_pFormatContext);
+    } catch (std::exception &e)
+    {
+      CLog::Log(LOGERROR, "%s - exception '%s' thrown during av_find_stream_info", __FUNCTION__, e.what());
+    } catch (...)
+    {
+      CLog::Log(LOGERROR, "%s - exception thrown during av_find_stream_info", __FUNCTION__);
+    }
+
     if (iErr < 0)
     {
-      CLog::Log(LOGWARNING,"could not find codec parameters for %s", strFile.c_str());
-      if (m_pInput->IsStreamType(DVDSTREAM_TYPE_DVD) || (m_pFormatContext->nb_streams == 1 && m_pFormatContext->streams[0]->codec->codec_id == CODEC_ID_AC3))
-      {
-        // special case, our codecs can still handle it.
-      }
-      else
-      {
-        Dispose();
-        return false;
+      // Check for interrupted state:
+      if ((iErr == -4) && (stream_count==0) && (m_pFormatContext->nb_streams > 0))
+      { // margro: workaround for buggy FFMPEG rtsp stream recognition.
+        // The rtsp stream detection will likely timeout after max_analyze_duration
+        // This does not mean that we didn't detect the streams, so when nb_streams > 0
+        // we can probably still play the stream
+        CLog::Log(LOGWARNING,"%s - av_find_stream_info returned: %i stream_count=%i, nb_streams=%i", __FUNCTION__, iErr, stream_count, m_pFormatContext->nb_streams);
+        // margro: added this workaround for the playback of rtsp streamed recordings from the MediaPortal pvrclient
+        if (m_pFormatContext->nb_programs == 1)
+        {
+          if ( m_pFormatContext->programs[0]->nb_stream_indexes == 0)
+          {
+            // nb_streams>0, but programs[0] does not contain the streams.
+            // This can occur after a max_analyze_duration timeout
+            // just skip the programs stuff
+            m_pFormatContext->nb_programs = 0;
+          }
+        }
+      } else {
+        CLog::Log(LOGWARNING,"%s - av_find_stream_info could not find codec parameters for %s", __FUNCTION__, strFile.c_str());
+        if (m_pInput->IsStreamType(DVDSTREAM_TYPE_DVD) || (m_pFormatContext->nb_streams == 1 && m_pFormatContext->streams[0]->codec->codec_id == CODEC_ID_AC3))
+        {
+          // special case, our codecs can still handle it.
+        }
+        else
+        {
+          Dispose();
+          return false;
+        }
       }
     }
     CLog::Log(LOGDEBUG, "%s - av_find_stream_info finished", __FUNCTION__);
