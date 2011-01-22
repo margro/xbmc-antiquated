@@ -187,19 +187,23 @@ PVR_ERROR cPVRClientForTheRecord::RequestEPGForChannel(const PVR_CHANNEL &channe
         {
           if (epg.Parse(response[index]))
           {
-            m_epg_id_offset++;
-            proginfo.channum         = channel.number;
-            proginfo.uid             = m_epg_id_offset;
-            proginfo.title           = epg.Title();
-            proginfo.subtitle        = epg.Subtitle();
-            proginfo.description     = "";
-            proginfo.starttime       = epg.StartTime();
-            proginfo.endtime         = epg.EndTime();
-            proginfo.genre_type      = 0;
-            proginfo.genre_sub_type  = 0;
-            proginfo.genre_text      = "";
-            proginfo.parental_rating = 0;
-            PVR->TransferEpgEntry(handle, &proginfo);
+            cGuideProgram guideprogram;
+            if (FetchGuideProgramDetails(epg.UniqueId(), guideprogram))
+            {
+              m_epg_id_offset++;
+              proginfo.channum         = channel.number;
+              proginfo.uid             = m_epg_id_offset;
+              proginfo.title           = guideprogram.Title();
+              proginfo.subtitle        = guideprogram.SubTitle();
+              proginfo.description     = guideprogram.Description();
+              proginfo.starttime       = guideprogram.StartTime();
+              proginfo.endtime         = guideprogram.StopTime();
+              proginfo.genre_type      = 0;
+              proginfo.genre_sub_type  = 0;
+              proginfo.genre_text      = guideprogram.Category();
+              proginfo.parental_rating = 0;
+              PVR->TransferEpgEntry(handle, &proginfo);
+            }
           }
           epg.Reset();
         }
@@ -218,6 +222,18 @@ PVR_ERROR cPVRClientForTheRecord::RequestEPGForChannel(const PVR_CHANNEL &channe
   return PVR_ERROR_NO_ERROR;
 }
 
+bool cPVRClientForTheRecord::FetchGuideProgramDetails(std::string Id, cGuideProgram& guideprogram)
+{ 
+  bool fRc = false;
+  Json::Value guideprogramresponse;
+
+  int retval = ForTheRecord::GetProgramById(Id, guideprogramresponse);
+  if (retval >= 0)
+  {
+    fRc = guideprogram.Parse(guideprogramresponse);
+  }
+  return fRc;
+}
 
 /************************************************************/
 /** Channel handling */

@@ -138,6 +138,13 @@ namespace ForTheRecord
    */
   int DeleteRecording(const std::string recordingfilename);
 
+  /**
+   * \brief Fetch the detailed information of a guide program
+   * \param id unique id (guid) of the recording
+   * \param response Reference to a std::string used to store the json response string
+   */
+  int GetProgramById(const std::string& id, Json::Value& response);
+
   time_t WCFDateToTimeT(const std::string& wcfdate, int& offset);
 
 } //namespace ForTheRecord

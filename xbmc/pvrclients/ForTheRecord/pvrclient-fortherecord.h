@@ -24,6 +24,7 @@
 
 #include "channel.h"
 #include "recording.h"
+#include "guideprogram.h"
 #include "os-dependent.h"
 
 #ifdef TSREADER
@@ -94,6 +95,7 @@ private:
   cChannel* FetchChannel(int channel_uid);
   void Close();
   bool FetchRecordingDetails(const Json::Value& data, cRecording& recording);
+  bool FetchGuideProgramDetails(std::string Id, cGuideProgram& guideprogram);
 
   //int                     m_iCurrentChannel;
   bool                    m_bConnected;
