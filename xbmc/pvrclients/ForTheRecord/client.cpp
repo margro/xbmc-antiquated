@@ -20,6 +20,7 @@
 #include "xbmc_pvr_dll.h"
 #include "pvrclient-fortherecord.h"
 #include "utils.h"
+#include "uri.h"
 
 using namespace std;
 
@@ -88,6 +89,7 @@ ADDON_STATUS Create(void* hdl, void* props)
   if (XBMC->GetSetting("host", &buffer))
   {
     g_szHostname = buffer;
+    uri::decode(g_szHostname);
   }
   else
   {
