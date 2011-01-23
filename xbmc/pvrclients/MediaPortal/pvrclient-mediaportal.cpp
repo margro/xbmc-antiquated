@@ -479,6 +479,13 @@ PVR_ERROR cPVRClientMediaPortal::RequestChannelList(PVRHANDLE handle, int radio)
   if(radio)
   {
     XBMC->Log(LOG_DEBUG, "RequestChannelList for Radio group:%s", g_szRadioGroup.c_str());
+
+    if(!g_bRadioEnabled)
+    {
+      XBMC->Log(LOG_INFO, "Fetching radio channels is disabled.");
+      return PVR_ERROR_NO_ERROR;
+    }
+
     command.Format("ListRadioChannels:%s\n", uri::encode(uri::PATH_TRAITS, g_szRadioGroup).c_str());
   } else {
     XBMC->Log(LOG_DEBUG, "RequestChannelList for TV group:%s", g_szTVGroup.c_str());
