@@ -32,11 +32,13 @@
 #define DEFAULT_PORT                  9596
 #define DEFAULT_FTA_ONLY              false
 #define DEFAULT_RADIO                 true
-#define DEFAULT_CHARCONV              false
-#define DEFAULT_TIMEOUT               3
-#define DEFAULT_BADCHANNELS           true
+#define DEFAULT_TIMEOUT               6
 #define DEFAULT_HANDLE_MSG            false
+#ifdef TSREADER
+#define DEFAULT_RESOLVE_RTSP_HOSTNAME false
+#else
 #define DEFAULT_RESOLVE_RTSP_HOSTNAME true
+#endif
 #define DEFAULT_READ_GENRE            false
 #define DEFAULT_SLEEP_RTSP_URL        0
 #define DEFAULT_USE_REC_DIR           false
@@ -57,8 +59,6 @@ extern int          g_iConnectTimeout;
 extern int          g_iSleepOnRTSPurl;
 extern bool         g_bOnlyFTA;
 extern bool         g_bRadioEnabled;
-extern bool         g_bCharsetConv;
-extern bool         g_bNoBadChannels;
 extern bool         g_bHandleMessages;
 extern bool         g_bResolveRTSPHostname;
 extern bool         g_bReadGenre;
