@@ -1249,3 +1249,6 @@ config.log
 /addons/pvr.fortherecord.argus/libcurld.dll
 /xbmc/pvrclients/MediaPortal/lib/live555/obj
 /xbmc/pvrclients/MediaPortal/lib/live555/shared
+
+/addons/pvr.team-mediaportal.tvserver/TVServerXBMC
+/project/Win32BuildSetup/BUILD_WIN32
