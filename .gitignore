@@ -25,6 +25,7 @@ config.log
 *.rej
 *.orig
 *.bak
+vc90.idb
 
 # Windows specific generated files
 *.exp
@@ -478,6 +479,34 @@ config.log
 /xbmc/cores/dvdplayer/Codecs/ffmpeg/.version
 /xbmc/cores/dvdplayer/Codecs/ffmpeg/version.h
 /xbmc/cores/dvdplayer/Codecs/ffmpeg/libavutil/avconfig.h
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavcodec/avcodec-52.def
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavcodec/avcodec-52.dll
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavcodec/avcodec.dll
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavcodec/avcodec-52.lib
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavdevice/avdevice-52.def
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavdevice/avdevice-52.dll
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavdevice/avdevice.dll
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavdevice/avdevice-52.lib
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavfilter/avfilter-1.def
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavfilter/avfilter-1.dll
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavfilter/avfilter-1.lib
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavfilter/avfilter.dll
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavformat/avformat-52.def
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavformat/avformat-52.dll
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavformat/avformat-52.lib
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavformat/avformat.dll
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavutil/avutil-50.def
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavutil/avutil-50.dll
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavutil/avutil-50.lib
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libavutil/avutil.dll
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libpostproc/postproc-51.def
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libpostproc/postproc-51.dll
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libpostproc/postproc-51.lib
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libpostproc/postproc.dll
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libswscale/swscale-0.def
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libswscale/swscale-0.dll
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libswscale/swscale-0.lib
+/xbmc/cores/dvdplayer/Codecs/ffmpeg/libswscale/swscale.dll
 
 # /xbmc/cores/dvdplayer/Codecs/ffmpeg/doc/
 /xbmc/cores/dvdplayer/Codecs/ffmpeg/doc/*.html
@@ -1244,9 +1273,6 @@ config.log
 /xbmc/win32/svn_rev.h
 
 
-/xbmc/pvrclients/MediaPortal/project/VS2008Express/Debug
-/xbmc/pvrclients/MediaPortal/project/VS2008Express/Release
-/xbmc/pvrclients/MediaPortal/project/VS2008Express/Debug-tsreader
 /addons/library.xbmc.addon/libXBMC_addon.lib
 /addons/library.xbmc.addon/libXBMC_addon.dll
 /addons/library.xbmc.gui/libXBMC_gui.lib
@@ -1254,25 +1280,32 @@ config.log
 /addons/library.xbmc.pvr/libXBMC_pvr.lib
 /addons/library.xbmc.pvr/libXBMC_pvr.dll
 /portable_data
-/addons/pvr.vdr.streamdev/XBMC_VDR_win32.lib
 /lib/addons/library.xbmc.addon/project/VS2008Express/Debug
 /lib/addons/library.xbmc.gui/project/VS2008Express/Debug
 /lib/addons/library.xbmc.pvr/project/VS2008Express/Debug
-/xbmc/pvrclients/tvheadend/project/VS2008Express/Release
-/xbmc/pvrclients/tvheadend/project/VS2008Express/Debug
-/addons/pvr.hts/XBMC_Tvheadend_win32.lib
 /lib/addons/library.xbmc.addon/project/VS2008Express/Release
 /lib/addons/library.xbmc.gui/project/VS2008Express/Release
 /lib/addons/library.xbmc.pvr/project/VS2008Express/Release
+/xbmc/pvrclients/MediaPortal/project/VS2008Express/Debug
+/xbmc/pvrclients/MediaPortal/project/VS2008Express/Release
+/xbmc/pvrclients/MediaPortal/project/VS2008Express/Debug-tsreader
 /xbmc/pvrclients/MediaPortal/project/VS2008Express/Release-tsreader
+/xbmc/pvrclients/MediaPortal/lib/live555/obj
+/xbmc/pvrclients/MediaPortal/lib/live555/shared
+/xbmc/pvrclients/tvheadend/project/VS2008Express/Release
+/xbmc/pvrclients/tvheadend/project/VS2008Express/Debug
 /xbmc/pvrclients/vdr-streamdev/project/VS2008Express/Release
 /xbmc/pvrclients/vdr-streamdev/project/VS2008Express/Debug
 /xbmc/pvrclients/ForTheRecord/lib/libcurld.lib
 /xbmc/pvrclients/ForTheRecord/lib/libcurld.dll
+/xbmc/pvrclients/ForTheRecord/lib/libcurl.lib
+/xbmc/pvrclients/ForTheRecord/lib/libcurl.dll
 /xbmc/pvrclients/ForTheRecord/lib/curl-7.21.3/lib/Debug
 /xbmc/pvrclients/ForTheRecord/lib/curl-7.21.3/lib/Release
 /xbmc/pvrclients/ForTheRecord/project/VS2008Express/Debug
 /xbmc/pvrclients/ForTheRecord/project/VS2008Express/Release
 /addons/pvr.fortherecord.argus/libcurld.dll
-/xbmc/pvrclients/MediaPortal/lib/live555/obj
-/xbmc/pvrclients/MediaPortal/lib/live555/shared
+/addons/pvr.fortherecord.argus/libcurl.dll
+/addons/pvr.team-mediaportal.tvserver/TVServerXBMC
+/addons/pvr.hts/XBMC_Tvheadend_win32.lib
+/addons/pvr.vdr.streamdev/XBMC_VDR_win32.lib
