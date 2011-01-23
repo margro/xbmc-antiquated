@@ -180,6 +180,17 @@ IF %comp%==vs2008 (
   Echo Lircmap.xml>>exclude.txt
   
   md BUILD_WIN32\Xbmc
+  rem Additions by margro:
+  Echo addons\pvr.fortherecord.argus\libcurld.dll >>exclude.txt
+  Echo userdata\addon_data\ >>exclude.txt
+  Echo userdata\keymaps\ >>exclude.txt
+  Echo userdata\masterprofile\ >>exclude.txt
+  Echo *fmScrobbler.xml >>exclude.txt
+  Echo .ilk>>exclude.txt
+  Echo .exp>>exclude.txt
+  Echo .def>>exclude.txt
+  Echo .pdb>>exclude.txt
+  Echo .lib>>exclude.txt
 
   xcopy %EXE% BUILD_WIN32\Xbmc > NUL
   xcopy ..\..\userdata BUILD_WIN32\Xbmc\userdata /E /Q /I /Y /EXCLUDE:exclude.txt > NUL
@@ -236,7 +247,10 @@ IF %comp%==vs2008 (
   ECHO Generating installer includes...
   call genNsisIncludes.bat
   ECHO ------------------------------------------------------------
-  FOR /F "Tokens=2* Delims=]" %%R IN ('FIND /v /n "&_&_&_&" "..\..\.svn\entries" ^| FIND "[11]"') DO SET XBMC_REV=%%R
+  SET FIND=find
+  REM Check for the Windows find. MinGW find will fail.
+  %FIND% /? > NUL 2> NUL || SET FIND=%WINDIR%\system32\find
+  FOR /F "Tokens=2* Delims=]" %%R IN ('%FIND% /v /n "&_&_&_&" "..\..\.svn\entries" ^| %FIND% "[11]"') DO SET XBMC_REV=%%R
   SET XBMC_SETUPFILE=XBMCSetup-Rev%XBMC_REV%-%target%.exe
   ECHO Creating installer %XBMC_SETUPFILE%...
   IF EXIST %XBMC_SETUPFILE% del %XBMC_SETUPFILE% > NUL
@@ -274,7 +288,10 @@ IF %comp%==vs2008 (
     rem try with space delim instead of tab
     FOR /F "tokens=3* delims= " %%A IN ('REG QUERY "HKLM\Software\Wow6432Node\NSIS" /ve') DO SET NSISExePath=%%B
   )
-
+  rem Compress the executable if we can find upx
+  upx -V 2> NUL && upx "%CD%\BUILD_WIN32\Xbmc\xbmc.exe"
+  echo Just before make nsis. You can check BUILD_WIN32 for unnecessary files and remove them now. Press enter to continue
+  pause
   SET NSISExe=%NSISExePath%\makensis.exe
   "%NSISExe%" /V1 /X"SetCompressor /FINAL lzma" /Dxbmc_root="%CD%\BUILD_WIN32" /Dxbmc_revision="%XBMC_REV%" /Dxbmc_target="%target%" "XBMC for Windows.nsi"
   IF NOT EXIST "%XBMC_SETUPFILE%" (
