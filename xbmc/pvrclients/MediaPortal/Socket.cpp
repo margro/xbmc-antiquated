@@ -458,6 +458,7 @@ bool Socket::connect ( const std::string host, const unsigned short port )
 
   if ( status == SOCKET_ERROR )
   {
+    XBMC->Log(LOG_ERROR, "Socket::connect %s:%u\n", host.c_str(), port);
     errormessage( getLastError(), "Socket::connect" );
     return false;
   }
