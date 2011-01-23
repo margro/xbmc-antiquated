@@ -34,8 +34,6 @@ int         g_iConnectTimeout      = DEFAULT_TIMEOUT;      ///< The Socket conne
 int         g_iSleepOnRTSPurl      = DEFAULT_SLEEP_RTSP_URL; ///< An optional delay between tuning a channel and opening the corresponding RTSP stream in XBMC (default: 0)
 bool        g_bOnlyFTA             = DEFAULT_FTA_ONLY;     ///< Send only Free-To-Air Channels inside Channel list to XBMC
 bool        g_bRadioEnabled        = DEFAULT_RADIO;        ///< Send also Radio channels list to XBMC
-bool        g_bCharsetConv         = DEFAULT_CHARCONV;     ///< Convert incoming strings to UTF8 character set
-bool        g_bNoBadChannels       = DEFAULT_BADCHANNELS;
 bool        g_bHandleMessages      = DEFAULT_HANDLE_MSG;   ///< Send VDR's OSD status messages to XBMC OSD
 bool        g_bResolveRTSPHostname = DEFAULT_RESOLVE_RTSP_HOSTNAME; ///< Resolve the server hostname in the rtsp URLs to an IP at the TV Server side (default: false)
 bool        g_bReadGenre           = DEFAULT_READ_GENRE;   ///< Read the genre strings from MediaPortal and translate them into XBMC DVB genre id's (only English)
@@ -131,14 +129,6 @@ ADDON_STATUS Create(void* hdl, void* props)
     g_bRadioEnabled = DEFAULT_RADIO;
   }
 
-  /* Read setting "convertchar" from settings.xml */
-  if (!XBMC->GetSetting("convertchar", &g_bCharsetConv))
-  {
-    /* If setting is unknown fallback to defaults */
-    XBMC->Log(LOG_ERROR, "Couldn't get 'convertchar' setting, falling back to 'false' as default");
-    g_bCharsetConv = DEFAULT_CHARCONV;
-  }
-
   /* Read setting "timeout" from settings.xml */
   if (!XBMC->GetSetting("timeout", &g_iConnectTimeout))
   {
@@ -163,6 +153,7 @@ ADDON_STATUS Create(void* hdl, void* props)
     g_szRadioGroup = buffer;
   }
 
+#ifndef TSREADER
   /* Read setting "resolvertsphostname" from settings.xml */
   if (!XBMC->GetSetting("resolvertsphostname", &g_bResolveRTSPHostname))
   {
@@ -170,6 +161,7 @@ ADDON_STATUS Create(void* hdl, void* props)
     XBMC->Log(LOG_ERROR, "Couldn't get 'resolvertsphostname' setting, falling back to 'true' as default");
     g_bResolveRTSPHostname = DEFAULT_RESOLVE_RTSP_HOSTNAME;
   }
+#endif
 
   /* Read setting "readgenre" from settings.xml */
   if (!XBMC->GetSetting("readgenre", &g_bReadGenre))
@@ -317,11 +309,6 @@ ADDON_STATUS SetSetting(const char *settingName, const void *settingValue)
     XBMC->Log(LOG_INFO, "Changed setting 'useradio' from %u to %u", g_bRadioEnabled, *(bool*) settingValue);
     g_bRadioEnabled = *(bool*) settingValue;
   }
-  else if (str == "convertchar")
-  {
-    XBMC->Log(LOG_INFO, "Changed setting 'convertchar' from %u to %u", g_bCharsetConv, *(bool*) settingValue);
-    g_bCharsetConv = *(bool*) settingValue;
-  }
   else if (str == "timeout")
   {
     XBMC->Log(LOG_INFO, "Changed setting 'timeout' from %u to %u", g_iConnectTimeout, *(int*) settingValue);
@@ -337,11 +324,13 @@ ADDON_STATUS SetSetting(const char *settingName, const void *settingValue)
     XBMC->Log(LOG_INFO, "Changed setting 'radiogroup' from %s to %s", g_szRadioGroup.c_str(), (const char*) settingValue);
     g_szRadioGroup = (const char*) settingValue;
   }
+#ifndef TSREADER
   else if (str == "resolvertsphostname")
   {
     XBMC->Log(LOG_INFO, "Changed setting 'resolvertsphostname' from %u to %u", g_bResolveRTSPHostname, *(bool*) settingValue);
     g_bResolveRTSPHostname = *(bool*) settingValue;
   }
+#endif
   else if (str == "readgenre")
   {
     XBMC->Log(LOG_INFO, "Changed setting 'readgenre' from %u to %u", g_bReadGenre, *(bool*) settingValue);
